@@ -280,7 +280,7 @@ body.printing{width:10.2in}
   <div class="byeCard">
     <h2>Thanks for bowling!</h2>
     <p>Fishers Island Community Center<br>Bowling Alley</p>
-    <p class="small">You can now close this app.</p>
+    <p class="small">You can now close this app by swiping it away or pressing your phone's Home button.</p>
     <button id="byeRestart">Start a New Score Sheet</button>
   </div>
 </div>
@@ -599,8 +599,7 @@ $('exitBtn').onclick=()=>{
   if(!confirm('Exit and clear the score sheet for the next bowlers?\n\nMake sure you have printed or exported your scores first.')) return;
   closePad();
   S={meta:{center:S.meta.center,event:'',date:today(),lane:'',games:1,cur:0},bowlers:[]}; cur=0; save();
-  $('byeScreen').hidden=false; renderAll();
-  try{ window.close(); }catch(e){}
+  renderAll(); $('byeScreen').hidden=false; window.scrollTo({top:0});
 };
 $('byeRestart').onclick=()=>{ $('byeScreen').hidden=true; window.scrollTo({top:0}); };
 $('newGameBtn').onclick=()=>{
