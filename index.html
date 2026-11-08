@@ -42,10 +42,11 @@ details[open]>summary::after{content:"▴"}
 .bw-h .nm{flex:1;font-weight:700}
 .bw-h .hd{width:38px;text-align:center;border:1px solid var(--line);border-radius:5px;background:var(--card)}
 .hdl{font-size:11px;color:var(--muted)}
-.tot{font-weight:800;font-size:15px;min-width:38px;text-align:right}
-.toth{font-size:12px;color:var(--muted);min-width:34px;text-align:right}
 .del{border:none;background:transparent;color:var(--muted);font-size:18px;padding:0 4px;line-height:1}
-.frames{display:grid;grid-template-columns:repeat(9,1fr) 1.4fr}
+.frames{display:grid;grid-template-columns:repeat(9,1fr) 1.4fr 1.1fr}
+.totc{display:flex;flex-direction:column;background:var(--cell)}
+.totc .tot{flex:1;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;min-width:0;text-align:center}
+.totc .toth{font-size:11px;color:var(--muted);text-align:center;min-height:13px;line-height:13px;padding-bottom:2px;min-width:0}
 .frame{border-left:1px solid var(--line);min-width:0}
 .frame:first-child{border-left:none}
 .fn{font-size:9px;color:var(--muted);text-align:center;line-height:11px;border-bottom:1px solid var(--line)}
@@ -60,7 +61,8 @@ details[open]>summary::after{content:"▴"}
 @keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
 .cum{height:18px;line-height:18px;font-weight:600;text-align:center;font-size:13px}
 @media (max-width:640px){
-  .frames{grid-template-columns:repeat(5,1fr)}
+  .frames{grid-template-columns:repeat(5,1fr) 46px}
+  .totc{grid-column:6;grid-row:1/3}
   .frame:nth-child(6){border-left:none}
   .frame:nth-child(-n+5){border-bottom:1px solid var(--line)}
   .tenth .ball{font-size:13px}
@@ -79,6 +81,8 @@ details[open]>summary::after{content:"▴"}
 .addPanel textarea{width:100%;font:inherit;font-size:16px;color:#1d1d1f;background:#fafafa;border:1px solid #ccc;border-radius:8px;padding:8px;resize:vertical}
 .addBtns{display:flex;gap:8px;margin-top:8px}
 .addBtns button{flex:1;padding:10px}
+.actions #print,.actions #export{font-weight:600}
+.actions{grid-template-columns:1fr 1fr!important}
 .actions .clear{grid-column:1/-1;color:var(--bad);border-color:var(--bad);font-weight:600}
 .add{width:100%;margin-top:6px;border-style:dashed;color:var(--muted)}
 .add.primary{border-style:solid;color:var(--accent-ink);padding:9px}
@@ -98,7 +102,7 @@ table.sum{border-collapse:collapse;width:100%;font-size:14px}
 #status.ok{color:var(--ok)}#status.err{color:var(--bad)}
 .wrap{max-width:900px;margin:0 auto}
 .print-only{display:none}
-@page{size:letter;margin:0.4in}
+@page{size:letter landscape;margin:0.4in}
 @media print{
 body{background:#fff!important;color:#000;padding:0!important;font-size:11px}
 body .no-print,body .keypad,body .tabs,body .del,body .add,body .addPanel,body .hint{display:none!important}
@@ -118,7 +122,10 @@ body .bw-h .hd{width:30px;border:none}
 body .hdl{font-size:9px}
 body .tot{font-size:12px}
 body .toth{font-size:10px}
-body .frames{grid-template-columns:repeat(9,1fr) 1.4fr!important}
+body .frames{grid-template-columns:repeat(9,1fr) 1.4fr 0.9fr!important}
+body .totc{grid-column:auto!important;grid-row:auto!important}
+body .totc .tot{font-size:12px}
+body .totc .toth{font-size:9px;min-height:0;line-height:10px}
 body .frame{border-left:1px solid #999!important;border-bottom:none!important}
 body .frame:first-child{border-left:none!important}
 body .fn{font-size:8px;line-height:9px;border-color:#999}
@@ -154,7 +161,10 @@ body.printing .bw-h .hd{width:30px;border:none}
 body.printing .hdl{font-size:9px}
 body.printing .tot{font-size:12px}
 body.printing .toth{font-size:10px}
-body.printing .frames{grid-template-columns:repeat(9,1fr) 1.4fr!important}
+body.printing .frames{grid-template-columns:repeat(9,1fr) 1.4fr 0.9fr!important}
+body.printing .totc{grid-column:auto!important;grid-row:auto!important}
+body.printing .totc .tot{font-size:12px}
+body.printing .totc .toth{font-size:9px;min-height:0;line-height:10px}
 body.printing .frame{border-left:1px solid #999!important;border-bottom:none!important}
 body.printing .frame:first-child{border-left:none!important}
 body.printing .fn{font-size:8px;line-height:9px;border-color:#999}
@@ -171,7 +181,7 @@ body.printing .bw-h .nm{flex:1 1 0;min-width:70px;width:auto}
 body.printing .hdl{display:none}
 body.printing .bw-h .hd{width:22px!important;text-align:right}
 body.printing .bw:not(:first-child) .fn{display:none}
-body.printing{width:7.7in}
+body.printing{width:10.2in}
 </style>
 </head>
 <body>
@@ -203,9 +213,8 @@ body.printing{width:7.7in}
 
 <div class="card no-print">
   <div class="actions">
-    <button id="dlJson">JSON</button>
-    <button id="dlCsv">CSV</button>
     <button id="print">Print</button>
+    <button id="export">Export</button>
     <button class="clear" id="newSheet">Clear Score Sheet</button>
   </div>
   <div id="status"></div>
@@ -323,7 +332,7 @@ function sheetTable(g, forPrint){
   const box=document.createElement('div');
   S.bowlers.forEach((b,bi)=>{
     const card=document.createElement('div'); card.className='bw';
-    let html=`<div class="bw-h"><input class="nm" data-name="${bi}" placeholder="Bowler ${bi+1}"><span class="hdl">Hdcp</span><input class="hd" data-hd="${bi}" inputmode="numeric"><span class="tot" data-tot="${bi}-${g}"></span><span class="toth" data-toth="${bi}-${g}"></span>`;
+    let html=`<div class="bw-h"><input class="nm" data-name="${bi}" placeholder="Bowler ${bi+1}"><span class="hdl">Hdcp</span><input class="hd" data-hd="${bi}" inputmode="numeric">`;
     if(!forPrint) html+=`<button class="del no-print" title="Remove bowler" data-del="${bi}">×</button>`;
     html+='</div><div class="frames">';
     for(let f=0;f<10;f++){
@@ -331,6 +340,7 @@ function sheetTable(g, forPrint){
       for(let k=0;k<(f===9?3:2);k++) html+=`<button class="ball" data-b="${bi}" data-g="${g}" data-f="${f}" data-k="${k}"></button>`;
       html+=`</div><div class="cum" data-cum="${bi}-${g}-${f}"></div></div>`;
     }
+    html+=`<div class="frame totc"><div class="fn">Total</div><div class="tot" data-tot="${bi}-${g}"></div><div class="toth" data-toth="${bi}-${g}"></div></div>`;
     card.innerHTML=html+'</div>'; box.appendChild(card);
   });
   return box;
@@ -513,7 +523,7 @@ $('newSheet').onclick=()=>{ if(!confirm('Clear the score sheet? All scores will 
   const keepNames=confirm('Keep the same bowlers and handicaps?\n\nOK = keep bowlers, clear scores only\nCancel = remove bowlers too');
   S={meta:{...S.meta,date:today()},bowlers:keepNames?S.bowlers.map(b=>({name:b.name,hdcp:b.hdcp,games:[]})):[]};
   cur=0; renderAll(); setStatus('Score sheet cleared.','ok'); window.scrollTo({top:0,behavior:'smooth'});};
-const PAGE_H=10.2*96; // letter height minus margins, in CSS px
+const PAGE_H=7.7*96; // landscape letter height minus margins, in CSS px
 function fitPrint(){
   closePad(); const bd=document.body; bd.style.zoom=''; bd.classList.add('printing');
   let z=1;
@@ -543,11 +553,24 @@ function buildExport(){
 function slug(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
 function baseName(){ return [S.meta.date||today(), slug(S.meta.event)||'scores', S.meta.lane?'lane-'+slug(S.meta.lane):''].filter(Boolean).join('_'); }
 function download(name,text,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500); }
-$('dlJson').onclick=()=>download(baseName()+'.json',JSON.stringify(buildExport(),null,2),'application/json');
-$('dlCsv').onclick=()=>{ const d=buildExport(); const n=d.gamesPerSeries;
-  const rows=[['date','center','event','lane','bowler','handicap',...Array.from({length:n},(_,i)=>'game'+(i+1)),'series','hdcp_series','average']];
+function exportCsv(){
+  const d=buildExport(); const n=d.gamesPerSeries;
+  if(!d.bowlers.length){ setStatus('Add bowlers and scores before exporting.','err'); return; }
+  const rows=[['Date','Center','League/Event','Lane','Bowler','Handicap',...Array.from({length:n},(_,i)=>'Game '+(i+1)),'Series','Handicap Series','Average']];
   d.bowlers.forEach(b=>rows.push([d.date,d.center,d.event,d.lane,b.name,b.handicap,...b.games.map(g=>g.bowled?g.scratch:''),b.series,b.seriesWithHandicap,b.average??'']));
-  download(baseName()+'.csv',rows.map(r=>r.map(v=>/[",\n]/.test(String(v))?'"'+String(v).replace(/"/g,'""')+'"':v).join(',')).join('\n'),'text/csv'); };
+  const csv=rows.map(r=>r.map(v=>/[",\n]/.test(String(v))?'"'+String(v).replace(/"/g,'""')+'"':v).join(',')).join('\r\n');
+  const name=baseName()+'.csv';
+  try{
+    const file=new File([csv],name,{type:'text/csv'});
+    if(navigator.canShare && navigator.canShare({files:[file]}) && /iPhone|iPad|Android/i.test(navigator.userAgent)){
+      navigator.share({files:[file],title:'Bowling scores'}).then(()=>setStatus('Scores exported.','ok')).catch(e=>{ if(e.name!=='AbortError'){ download(name,csv,'text/csv'); setStatus('Saved '+name,'ok'); } });
+      return;
+    }
+  }catch(e){}
+  download(name,csv,'text/csv'); setStatus('Saved '+name+' to your downloads.','ok');
+}
+$('export').onclick=exportCsv;
+
 
 function setStatus(msg,cls){ const s=$('status'); s.textContent=msg; s.className=cls||''; }
 
