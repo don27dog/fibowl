@@ -36,9 +36,11 @@ details>summary::-webkit-details-marker{display:none}
 details>summary::after{content:"▾";color:var(--muted)}
 details[open]>summary::after{content:"▴"}
 #metaLine{color:var(--muted);font-weight:400;flex:1;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tabs{display:flex;gap:5px;margin-bottom:6px}
-.tabs button{flex:1;padding:4px 0;font-size:14px}
-.tabs button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.gameLabel{font-weight:800;font-size:16px;margin:0 2px 6px;color:var(--ink)}
+.newGame{margin:4px 0 6px;padding:12px;border-radius:10px;background:#e8f5ec;border:1px solid #b9e2c5;text-align:center}
+.newGame[hidden]{display:none}
+.newGame p{margin:0 0 8px;font-weight:700;color:#1e6b33;font-size:15px}
+.newGame button{width:100%;padding:12px;font-size:17px;font-weight:700;background:#2e9d5b;color:#fff;border-color:#268a4f;border-radius:9px}
 /* bowler cards */
 .bw{border:1px solid var(--line);border-radius:7px;margin-bottom:6px;overflow:hidden}
 .bw-h{display:flex;align-items:center;gap:6px;padding:2px 6px;background:var(--cell);border-bottom:1px solid var(--line)}
@@ -95,11 +97,11 @@ table.sum{border-collapse:collapse;width:100%;font-size:14px}
 .sum th{font-size:11px;color:var(--muted);font-weight:600}
 .sum th:first-child,.sum td:first-child{text-align:left;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:6px}
-.keypad{position:absolute;z-index:20;display:none;grid-template-columns:repeat(6,1fr);gap:clamp(5px,1.8cqw,10px);width:min(520px,calc(100vw - 16px));padding:clamp(7px,2.2cqw,12px);container-type:inline-size;box-sizing:border-box;background:#14233f;border:1px solid #0b1528;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.35)}
+.keypad{position:absolute;z-index:20;display:none;grid-template-columns:repeat(6,1fr);gap:clamp(4px,1.8cqw,8px);width:min(390px,calc((100vw - 16px) * 0.75));padding:clamp(5px,2.2cqw,9px);container-type:inline-size;box-sizing:border-box;background:#2a2a2d;border:1px solid #1a1a1c;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.35)}
 .keypad.open{display:grid}
 .keypad button[hidden]{display:none}
-.keypad button{padding:0;height:clamp(40px,min(13.5cqw,15vh),76px);font-weight:700;font-size:clamp(17px,min(6cqw,6.5vh),32px);border-radius:clamp(7px,2cqw,12px);background:#2c4a80;color:#fff;border:1px solid #3a5d9c}
-.keypad button:active{background:#4a72b8}
+.keypad button{padding:0;height:clamp(30px,min(13.5cqw,11.25vh),57px);font-weight:700;font-size:clamp(13px,min(6cqw,4.9vh),24px);border-radius:clamp(5px,2cqw,9px);background:#48484d;color:#fff;border:1px solid #5c5c62}
+.keypad button:active{background:#6a6a70}
 .keypad .done{grid-column:span 2;background:#2e9d5b;color:#fff;border-color:#268a4f}
 .hint{font-size:12px;color:var(--muted);margin:4px 2px 0}
 #status{font-size:13px;margin-top:6px}
@@ -197,6 +199,7 @@ body.printing .hdl{display:none}
 body.printing .bw-h .hd{width:22px!important;text-align:right}
 body.printing .bw:not(:first-child) .fn{display:none}
 body.printing{width:10.2in}
+@media print{body.printing,body{width:auto!important;max-width:100%!important;overflow:visible}.frames,.bw{max-width:100%}}
 </style>
 </head>
 <body>
@@ -216,9 +219,10 @@ body.printing{width:10.2in}
 </div>
 
 <div class="card" id="sheetCard">
-  <div class="tabs no-print" id="tabs"></div>
+  <div class="gameLabel no-print" id="tabs"></div>
   <div class="startHint no-print" id="startHint" hidden><span class="arrow">▼</span> <span id="startText">Tap the first box in Frame 1 to begin scoring</span></div>
   <div id="sheets"></div>
+  <div class="newGame no-print" id="newGameBox" hidden><p id="newGameText">Game complete!</p><button id="newGameBtn">Begin New Game</button></div>
   <p class="hint no-print">Tap a box to enter marks: X strike · / spare · - miss · F foul</p>
 </div>
 
@@ -241,7 +245,6 @@ body.printing{width:10.2in}
       <label>League / event<input id="m-event" placeholder="e.g. Tuesday Mixed"></label>
       <label>Date<input id="m-date" type="date"></label>
       <label>Lane(s)<input id="m-lane" placeholder="e.g. 7-8"></label>
-      <label>Games<select id="m-games"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></label>
     </div>
   </details>
 </div>
@@ -261,11 +264,15 @@ const today = () => { const d=new Date(); return new Date(d-d.getTimezoneOffset(
 const emptyGame = () => Array.from({length:10},(_,i)=>i<9?['','']:['','','']);
 const newBowler = () => ({name:'',hdcp:0,games:[]});
 
-let S = store.get('bss_state') || {meta:{center:'Fishers Island Community Center',event:'',date:today(),lane:'',games:3},bowlers:[]};
+let S = store.get('bss_state') || {meta:{center:'Fishers Island Community Center',event:'',date:today(),lane:'',games:1},bowlers:[]};
 // show only bowlers actually added: drop empty placeholder rows (no name, no scores)
 const isBlank=b=>!String(b.name||'').trim() && !(b.games||[]).some(g=>g.some(fr=>fr.some(c=>c!=='')));
 S.bowlers=S.bowlers.filter(b=>!isBlank(b));
-let cur = 0;           // current game tab
+let cur = 0;           // current game
+(function(){ let last=-1; S.bowlers.forEach(b=>(b.games||[]).forEach((g,i)=>{ if(g.some(fr=>fr.some(c=>c!==''))) last=Math.max(last,i); }));
+  const saved=Number.isInteger(S.meta.cur)?S.meta.cur:-1;
+  S.meta.games=Math.max(1,last+1,saved+1); cur=Math.max(0,last,saved); S.meta.cur=cur;
+  S.bowlers.forEach(b=>{ b.games=(b.games||[]).slice(0,S.meta.games); }); })();
 let focused = null;    // last focused ball button
 
 function ensureGames(){ S.bowlers.forEach(b=>{ while(b.games.length<S.meta.games) b.games.push(emptyGame()); }); }
@@ -335,15 +342,7 @@ function gameStarted(game){ return game.some(fr=>fr.some(c=>c!=='')); }
 function gameDone(game){ return frameScores(game)[9]!==null; }
 
 /* ---------- rendering ---------- */
-function renderTabs(){
-  const t=$('tabs'); t.innerHTML='';
-  for(let g=0;g<S.meta.games;g++){
-    const b=document.createElement('button'); b.textContent='Game '+(g+1);
-    if(g===cur) b.className='on';
-    b.onclick=()=>{cur=g;renderAll();};
-    t.appendChild(b);
-  }
-}
+function renderTabs(){ $('tabs').textContent='Game '+(cur+1); }
 function sheetTable(g, forPrint){
   const box=document.createElement('div');
   S.bowlers.forEach((b,bi)=>{
@@ -405,6 +404,8 @@ function refresh(){
     }
   });
   renderSummary(); save(); updateStartHint();
+  const done=S.bowlers.length>0 && S.bowlers.every(b=>b.games[cur]&&gameDone(b.games[cur]));
+  $('newGameBox').hidden=!done; if(done) $('newGameText').textContent='Game '+(cur+1)+' complete!';
   const empty=!S.bowlers.length;
   $('tabs').style.display=empty?'none':'';
   $('sheetCard').style.display=empty?'none':'';
@@ -466,6 +467,7 @@ function advance(btn){
     if(!frameDone(S.bowlers[bi].games[g][fi],fi)){ const nb=ballAt(bi,fi); if(nb){ select(nb); return; } }
   }
   closePad();
+  if(!$('newGameBox').hidden) $('newGameBox').scrollIntoView({block:'center',behavior:'smooth'});
 }
 function backspace(btn){
   const fr=frOf(btn),k=+btn.dataset.k;
@@ -533,7 +535,6 @@ window.addEventListener('resize',()=>{ if(focused&&$('keypad').classList.contain
 
 /* ---------- meta ---------- */
 [['m-center','center'],['m-event','event'],['m-date','date'],['m-lane','lane']].forEach(([id,k])=>{ $(id).value=S.meta[k]||''; $(id).oninput=()=>{S.meta[k]=$(id).value;save();}; });
-$('m-games').value=S.meta.games; $('m-games').onchange=()=>{S.meta.games=+$('m-games').value; if(cur>=S.meta.games)cur=0; renderAll();};
 function openAdd(){ $('addPanel').hidden=false; $('addBowler').hidden=true; const t=$('addNames'); t.value=''; t.focus(); }
 function closeAdd(){ $('addPanel').hidden=true; $('addBowler').hidden=false; }
 $('addBowler').onclick=openAdd;
@@ -547,9 +548,13 @@ $('addGo').onclick=()=>{
   closeAdd(); renderAll();
   const tgt=first===0?$('startHint'):document.querySelector(`[data-name="${first}"]`); if(tgt) tgt.scrollIntoView({block:'start',behavior:'smooth'});
 };
+$('newGameBtn').onclick=()=>{
+  cur++; S.meta.cur=cur; if(S.meta.games<cur+1) S.meta.games=cur+1;
+  renderAll(); const h=$('sheetCard'); if(h) h.scrollIntoView({block:'start',behavior:'smooth'});
+};
 $('newSheet').onclick=()=>{ if(!confirm('Clear the score sheet? All scores will be erased.')) return;
   const keepNames=confirm('Keep the same bowlers and handicaps?\n\nOK = keep bowlers, clear scores only\nCancel = remove bowlers too');
-  S={meta:{...S.meta,date:today()},bowlers:keepNames?S.bowlers.map(b=>({name:b.name,hdcp:b.hdcp,games:[]})):[]};
+  S={meta:{...S.meta,date:today(),games:1,cur:0},bowlers:keepNames?S.bowlers.map(b=>({name:b.name,hdcp:b.hdcp,games:[]})):[]};
   cur=0; renderAll(); setStatus('Score sheet cleared.','ok'); window.scrollTo({top:0,behavior:'smooth'});};
 const PAGE_H=7.7*96; // landscape letter height minus margins, in CSS px
 function fitPrint(){
