@@ -50,6 +50,14 @@ details[open]>summary::after{content:"▴"}
 .thanks h3{margin:0 0 8px;font-size:18px;color:#1f4f9c;line-height:1.3}
 .thanks p{margin:0 0 10px;font-size:15px;color:#333}
 .thanks .ngBtns button{background:#1f5fbf;color:#fff;border-color:#1f5fbf}
+.exitBtn{display:block;width:100%;margin-top:10px;padding:12px;font-size:16px;font-weight:700;border-radius:9px;background:#3a3a3e;color:#fff;border:1px solid #2a2a2d}
+.bye{position:fixed;inset:0;z-index:50;background:rgba(20,35,63,.92);display:flex;align-items:center;justify-content:center;padding:20px}
+.bye[hidden]{display:none}
+.byeCard{background:#fff;border-radius:14px;padding:26px 20px;text-align:center;max-width:360px;width:100%;color:#14233f}
+.byeCard h2{margin:0 0 10px;font-size:24px;color:#2f9e44}
+.byeCard p{margin:0 0 10px;font-size:16px;font-weight:600}
+.byeCard .small{font-weight:400;color:#555;font-size:14px}
+.byeCard button{margin-top:8px;width:100%;padding:12px;font-size:16px;font-weight:700;border-radius:9px;background:#1f5fbf;color:#fff;border:none}
 .linkBtn{margin-top:10px;border:none;background:none;color:#1f5fbf;text-decoration:underline;font-size:14px;padding:4px}
 /* bowler cards */
 .bw{border:1px solid var(--line);border-radius:7px;margin-bottom:6px;overflow:hidden}
@@ -237,6 +245,7 @@ body.printing{width:10.2in}
     <h3>Thank you for bowling at the<br>Fishers Island Community Center!</h3>
     <p>Use the <b>Print</b> or <b>Export</b> buttons to save your scores.</p>
     <div class="ngBtns"><button id="thanksPrint">Print</button><button id="thanksExport">Export</button></div>
+    <button class="exitBtn" id="exitBtn">Exit App</button>
     <button class="linkBtn" id="bowlMore">Bowl another game</button>
   </div>
   <p class="hint no-print">Tap a box to enter marks: X strike · / spare · - miss · F foul</p>
@@ -267,6 +276,14 @@ body.printing{width:10.2in}
 </div>
 
 
+<div class="bye no-print" id="byeScreen" hidden>
+  <div class="byeCard">
+    <h2>Thanks for bowling!</h2>
+    <p>Fishers Island Community Center<br>Bowling Alley</p>
+    <p class="small">You can now close this app.</p>
+    <button id="byeRestart">Start a New Score Sheet</button>
+  </div>
+</div>
 <div class="keypad no-print" id="keypad"></div>
 
 <script>
@@ -569,6 +586,14 @@ $('finishBtn').onclick=()=>{ S.meta.finished=cur; refresh(); $('thanksBox').scro
 $('bowlMore').onclick=()=>{ delete S.meta.finished; $('newGameBtn').click(); };
 $('thanksPrint').onclick=()=>$('print').click();
 $('thanksExport').onclick=()=>$('export').click();
+$('exitBtn').onclick=()=>{
+  if(!confirm('Exit and clear the score sheet for the next bowlers?\n\nMake sure you have printed or exported your scores first.')) return;
+  closePad();
+  S={meta:{center:S.meta.center,event:'',date:today(),lane:'',games:1,cur:0},bowlers:[]}; cur=0; save();
+  $('byeScreen').hidden=false; renderAll();
+  try{ window.close(); }catch(e){}
+};
+$('byeRestart').onclick=()=>{ $('byeScreen').hidden=true; window.scrollTo({top:0}); };
 $('newGameBtn').onclick=()=>{
   delete S.meta.finished; cur++; S.meta.cur=cur; if(S.meta.games<cur+1) S.meta.games=cur+1;
   renderAll(); const h=$('sheetCard'); if(h) h.scrollIntoView({block:'start',behavior:'smooth'});
