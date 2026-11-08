@@ -40,7 +40,16 @@ details[open]>summary::after{content:"▴"}
 .newGame{margin:4px 0 6px;padding:12px;border-radius:10px;background:#e8f5ec;border:1px solid #b9e2c5;text-align:center}
 .newGame[hidden]{display:none}
 .newGame p{margin:0 0 8px;font-weight:700;color:#1e6b33;font-size:15px}
-.newGame button{width:100%;padding:12px;font-size:17px;font-weight:700;background:#2e9d5b;color:#fff;border-color:#268a4f;border-radius:9px}
+.ngBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.newGame button,.thanks .ngBtns button{width:100%;padding:12px 6px;font-size:16px;font-weight:700;border-radius:9px}
+#newGameBtn{background:#2e9d5b;color:#fff;border-color:#268a4f}
+#finishBtn{background:#fff;color:#1e6b33;border:2px solid #2e9d5b}
+.thanks{margin:4px 0 6px;padding:16px 12px;border-radius:10px;background:#eaf1fb;border:1px solid #bcd0ee;text-align:center}
+.thanks[hidden]{display:none}
+.thanks h3{margin:0 0 8px;font-size:18px;color:#1f4f9c;line-height:1.3}
+.thanks p{margin:0 0 10px;font-size:15px;color:#333}
+.thanks .ngBtns button{background:#1f5fbf;color:#fff;border-color:#1f5fbf}
+.linkBtn{margin-top:10px;border:none;background:none;color:#1f5fbf;text-decoration:underline;font-size:14px;padding:4px}
 /* bowler cards */
 .bw{border:1px solid var(--line);border-radius:7px;margin-bottom:6px;overflow:hidden}
 .bw-h{display:flex;align-items:center;gap:6px;padding:2px 6px;background:var(--cell);border-bottom:1px solid var(--line)}
@@ -222,7 +231,13 @@ body.printing{width:10.2in}
   <div class="gameLabel no-print" id="tabs"></div>
   <div class="startHint no-print" id="startHint" hidden><span class="arrow">▼</span> <span id="startText">Tap the first box in Frame 1 to begin scoring</span></div>
   <div id="sheets"></div>
-  <div class="newGame no-print" id="newGameBox" hidden><p id="newGameText">Game complete!</p><button id="newGameBtn">Begin New Game</button></div>
+  <div class="newGame no-print" id="newGameBox" hidden><p id="newGameText">Game complete!</p><div class="ngBtns"><button id="newGameBtn">Begin New Game</button><button id="finishBtn">Finish Bowling</button></div></div>
+  <div class="thanks no-print" id="thanksBox" hidden>
+    <h3>Thank you for bowling at the<br>Fishers Island Community Center!</h3>
+    <p>Use the <b>Print</b> or <b>Export</b> buttons to save your scores.</p>
+    <div class="ngBtns"><button id="thanksPrint">Print</button><button id="thanksExport">Export</button></div>
+    <button class="linkBtn" id="bowlMore">Bowl another game</button>
+  </div>
   <p class="hint no-print">Tap a box to enter marks: X strike · / spare · - miss · F foul</p>
 </div>
 
@@ -405,7 +420,8 @@ function refresh(){
   });
   renderSummary(); save(); updateStartHint();
   const done=S.bowlers.length>0 && S.bowlers.every(b=>b.games[cur]&&gameDone(b.games[cur]));
-  $('newGameBox').hidden=!done; if(done) $('newGameText').textContent='Game '+(cur+1)+' complete!';
+  const fin=done && S.meta.finished===cur;
+  $('newGameBox').hidden=!done||fin; $('thanksBox').hidden=!fin; if(done) $('newGameText').textContent='Game '+(cur+1)+' complete!';
   const empty=!S.bowlers.length;
   $('tabs').style.display=empty?'none':'';
   $('sheetCard').style.display=empty?'none':'';
@@ -548,13 +564,17 @@ $('addGo').onclick=()=>{
   closeAdd(); renderAll();
   const tgt=first===0?$('startHint'):document.querySelector(`[data-name="${first}"]`); if(tgt) tgt.scrollIntoView({block:'start',behavior:'smooth'});
 };
+$('finishBtn').onclick=()=>{ S.meta.finished=cur; refresh(); $('thanksBox').scrollIntoView({block:'center',behavior:'smooth'}); };
+$('bowlMore').onclick=()=>{ delete S.meta.finished; $('newGameBtn').click(); };
+$('thanksPrint').onclick=()=>$('print').click();
+$('thanksExport').onclick=()=>$('export').click();
 $('newGameBtn').onclick=()=>{
-  cur++; S.meta.cur=cur; if(S.meta.games<cur+1) S.meta.games=cur+1;
+  delete S.meta.finished; cur++; S.meta.cur=cur; if(S.meta.games<cur+1) S.meta.games=cur+1;
   renderAll(); const h=$('sheetCard'); if(h) h.scrollIntoView({block:'start',behavior:'smooth'});
 };
 $('newSheet').onclick=()=>{ if(!confirm('Clear the score sheet? All scores will be erased.')) return;
   const keepNames=confirm('Keep the same bowlers and handicaps?\n\nOK = keep bowlers, clear scores only\nCancel = remove bowlers too');
-  S={meta:{...S.meta,date:today(),games:1,cur:0},bowlers:keepNames?S.bowlers.map(b=>({name:b.name,hdcp:b.hdcp,games:[]})):[]};
+  S={meta:{...S.meta,date:today(),games:1,cur:0,finished:undefined},bowlers:keepNames?S.bowlers.map(b=>({name:b.name,hdcp:b.hdcp,games:[]})):[]};
   cur=0; renderAll(); setStatus('Score sheet cleared.','ok'); window.scrollTo({top:0,behavior:'smooth'});};
 const PAGE_H=7.7*96; // landscape letter height minus margins, in CSS px
 function fitPrint(){
