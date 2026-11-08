@@ -536,12 +536,21 @@ function select(btn,open){
 function openPad(btn){
   const pad=$('keypad'); pad.classList.add('open'); updateStartHint();
   updatePad(btn);
-  const fr=btn.closest('.frame').getBoundingClientRect();
+  // place the keypad just below the whole scorecard of the bowler who is up
+  const card=btn.closest('.bw').getBoundingClientRect();
   const w=pad.offsetWidth, vw=document.documentElement.clientWidth;
   const left=window.scrollX+Math.max(8,(vw-w)/2);
-  pad.style.left=left+'px'; pad.style.top=(fr.bottom+window.scrollY+4)+'px';
-  const r=pad.getBoundingClientRect();
-  if(r.bottom>window.innerHeight) window.scrollBy({top:r.bottom-window.innerHeight+12,behavior:'smooth'});
+  pad.style.left=left+'px'; pad.style.top=(card.bottom+window.scrollY+4)+'px';
+  // make sure the page is long enough to scroll the keypad into view, even for the last bowler
+  document.body.style.paddingBottom=(pad.offsetHeight+24)+'px';
+  const r=pad.getBoundingClientRect(), vh=(window.visualViewport?window.visualViewport.height:window.innerHeight);
+  // keep both the bowler's card and the keypad on screen
+  if(r.bottom>vh || card.top<0){
+    const need=r.bottom-vh+12;                 // scroll down so keypad fits
+    const maxDown=card.top-8;                  // but don't push the card's top off screen
+    const dy=card.top<0 ? card.top-8 : Math.min(need,maxDown);
+    if(dy) window.scrollBy({top:dy,behavior:'smooth'});
+  }
 }
 function updatePad(btn){
   const f=+btn.dataset.f,k=+btn.dataset.k,fr=frOf(btn);
@@ -556,7 +565,7 @@ function updatePad(btn){
     b.hidden=!ok;
   });
 }
-function closePad(){ $('keypad').classList.remove('open'); if(focused) focused.classList.remove('sel'); focused=null; if($('startHint')) updateStartHint(); }
+function closePad(){ $('keypad').classList.remove('open'); document.body.style.paddingBottom=''; if(focused) focused.classList.remove('sel'); focused=null; if($('startHint')) updateStartHint(); }
 const keys=['1','2','3','4','5','6','7','8','9','-','X','/','F','⌫','←','→','Done'];
 keys.forEach(k=>{ const b=document.createElement('button'); b.textContent=k; b.className=k==='Done'?'done':('⌫←→'.includes(k)?'nav':('-X/F'.includes(k)?'mk':'')); if(/^[1-9X/F-]$/.test(k)) b.dataset.key=k;
   b.onmousedown=e=>e.preventDefault();
@@ -598,10 +607,15 @@ $('newGameBtn').onclick=()=>{
   delete S.meta.finished; cur++; S.meta.cur=cur; if(S.meta.games<cur+1) S.meta.games=cur+1;
   renderAll(); const h=$('sheetCard'); if(h) h.scrollIntoView({block:'start',behavior:'smooth'});
 };
-$('newSheet').onclick=()=>{ if(!confirm('Clear the score sheet? All scores will be erased.')) return;
-  const keepNames=confirm('Keep the same bowlers and handicaps?\n\nOK = keep bowlers, clear scores only\nCancel = remove bowlers too');
-  S={meta:{...S.meta,date:today(),games:1,cur:0,finished:undefined},bowlers:keepNames?S.bowlers.map(b=>({name:b.name,hdcp:b.hdcp,games:[]})):[]};
-  cur=0; renderAll(); setStatus('Score sheet cleared.','ok'); window.scrollTo({top:0,behavior:'smooth'});};
+$('newSheet').onclick=()=>{
+  if(!S.bowlers.length){ setStatus('Nothing to clear yet.'); return; }
+  if(!confirm('Clear all scores for Game '+(cur+1)+'?\n\nBowlers and any earlier games will be kept.')) return;
+  closePad();
+  S.bowlers.forEach(b=>{ b.games[cur]=emptyGame(); });
+  if(S.meta.finished===cur) delete S.meta.finished;
+  renderAll(); setStatus('Game '+(cur+1)+' cleared.','ok');
+  const h=$('sheetCard'); if(h) h.scrollIntoView({block:'start',behavior:'smooth'});
+};
 const PAGE_H=7.7*96; // landscape letter height minus margins, in CSS px
 function fitPrint(){
   closePad(); const bd=document.body; bd.style.zoom=''; bd.classList.add('printing');
