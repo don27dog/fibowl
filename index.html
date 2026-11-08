@@ -95,10 +95,10 @@ table.sum{border-collapse:collapse;width:100%;font-size:14px}
 .sum th{font-size:11px;color:var(--muted);font-weight:600}
 .sum th:first-child,.sum td:first-child{text-align:left;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:6px}
-.keypad{position:absolute;z-index:20;display:none;grid-template-columns:repeat(6,1fr);gap:7px;width:min(352px,calc(100vw - 16px));padding:9px;background:#14233f;border:1px solid #0b1528;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.35)}
+.keypad{position:absolute;z-index:20;display:none;grid-template-columns:repeat(6,1fr);gap:clamp(5px,1.8cqw,10px);width:min(520px,calc(100vw - 16px));padding:clamp(7px,2.2cqw,12px);container-type:inline-size;box-sizing:border-box;background:#14233f;border:1px solid #0b1528;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.35)}
 .keypad.open{display:grid}
 .keypad button[hidden]{display:none}
-.keypad button{padding:0;height:52px;font-weight:700;font-size:22px;border-radius:9px;background:#2c4a80;color:#fff;border:1px solid #3a5d9c}
+.keypad button{padding:0;height:clamp(40px,min(13.5cqw,15vh),76px);font-weight:700;font-size:clamp(17px,min(6cqw,6.5vh),32px);border-radius:clamp(7px,2cqw,12px);background:#2c4a80;color:#fff;border:1px solid #3a5d9c}
 .keypad button:active{background:#4a72b8}
 .keypad .done{grid-column:span 2;background:#2e9d5b;color:#fff;border-color:#268a4f}
 .hint{font-size:12px;color:var(--muted);margin:4px 2px 0}
