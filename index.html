@@ -107,7 +107,7 @@ details[open]>summary::after{content:"▴"}
 .addBtns button{flex:1;padding:10px}
 .actions #print,.actions #export{font-weight:600}
 .actions{grid-template-columns:1fr 1fr!important}
-.actions .clear{grid-column:1/-1;color:var(--bad);border-color:var(--bad);font-weight:600}
+.actions .clear{grid-column:1/-1;color:#fff;background:#2e9d5b;border-color:#268a4f;font-weight:700}
 .add{width:100%;margin-top:6px;border-style:dashed;color:var(--muted)}
 .add.primary{border-style:solid;color:var(--accent-ink);padding:9px}
 table.sum{border-collapse:collapse;width:100%;font-size:14px}
@@ -260,7 +260,7 @@ body.printing{width:10.2in}
   <div class="actions">
     <button id="print">Print</button>
     <button id="export">Export</button>
-    <button class="clear" id="newSheet">Clear Score Sheet</button>
+    <button class="clear" id="newSheet">Finish Bowling</button>
   </div>
   <div id="status"></div>
   <details id="metaBox" style="margin-top:10px">
@@ -438,7 +438,7 @@ function refresh(){
   });
   renderSummary(); save(); updateStartHint();
   const done=S.bowlers.length>0 && S.bowlers.every(b=>b.games[cur]&&gameDone(b.games[cur]));
-  const fin=done && S.meta.finished===cur;
+  const fin=S.bowlers.length>0 && S.meta.finished===cur;
   $('newGameBox').hidden=!done||fin; $('thanksBox').hidden=!fin; if(done) $('newGameText').textContent='Game '+(cur+1)+' complete!';
   const empty=!S.bowlers.length;
   $('tabs').style.display=empty?'none':'';
@@ -592,7 +592,7 @@ $('addGo').onclick=()=>{
   const tgt=first===0?$('startHint'):document.querySelector(`[data-name="${first}"]`); if(tgt) tgt.scrollIntoView({block:'start',behavior:'smooth'});
 };
 $('finishBtn').onclick=()=>{ S.meta.finished=cur; refresh(); $('thanksBox').scrollIntoView({block:'center',behavior:'smooth'}); };
-$('bowlMore').onclick=()=>{ delete S.meta.finished; $('newGameBtn').click(); };
+$('bowlMore').onclick=()=>{ delete S.meta.finished; const done=S.bowlers.every(b=>b.games[cur]&&gameDone(b.games[cur])); if(done) $('newGameBtn').click(); else { refresh(); $('sheetCard').scrollIntoView({block:'start',behavior:'smooth'}); } };
 $('thanksPrint').onclick=()=>$('print').click();
 $('thanksExport').onclick=()=>$('export').click();
 $('exitBtn').onclick=()=>{
@@ -608,13 +608,9 @@ $('newGameBtn').onclick=()=>{
   renderAll(); const h=$('sheetCard'); if(h) h.scrollIntoView({block:'start',behavior:'smooth'});
 };
 $('newSheet').onclick=()=>{
-  if(!S.bowlers.length){ setStatus('Nothing to clear yet.'); return; }
-  if(!confirm('Clear all scores for Game '+(cur+1)+'?\n\nBowlers and any earlier games will be kept.')) return;
-  closePad();
-  S.bowlers.forEach(b=>{ b.games[cur]=emptyGame(); });
-  if(S.meta.finished===cur) delete S.meta.finished;
-  renderAll(); setStatus('Game '+(cur+1)+' cleared.','ok');
-  const h=$('sheetCard'); if(h) h.scrollIntoView({block:'start',behavior:'smooth'});
+  if(!S.bowlers.length){ setStatus('Add bowlers to begin scoring.'); return; }
+  closePad(); S.meta.finished=cur; refresh();
+  $('thanksBox').scrollIntoView({block:'center',behavior:'smooth'});
 };
 const PAGE_H=7.7*96; // landscape letter height minus margins, in CSS px
 function fitPrint(){
