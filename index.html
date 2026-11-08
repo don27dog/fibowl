@@ -102,6 +102,11 @@ table.sum{border-collapse:collapse;width:100%;font-size:14px}
 #status.ok{color:var(--ok)}#status.err{color:var(--bad)}
 .wrap{max-width:900px;margin:0 auto}
 .print-only{display:none}
+.sum .fl{display:none}
+@media (orientation:landscape){.sum .ab{display:none}.sum .fl{display:inline}}
+@media print{.sum .ab{display:none!important}.sum .fl{display:inline!important}}
+body.printing .sum .ab{display:none!important}
+body.printing .sum .fl{display:inline!important}
 @page{size:letter landscape;margin:0.4in}
 @media print{
 body{background:#fff!important;color:#000;padding:0!important;font-size:11px}
@@ -207,7 +212,7 @@ body.printing{width:10.2in}
 </div>
 
 <div class="card">
-  <h2>Series</h2>
+  <h2>Recap</h2>
   <table class="sum" id="summary"></table>
 </div>
 
@@ -397,9 +402,10 @@ function refresh(){
   $('summary').closest('.card').style.display=empty?'none':'';
 }
 function renderSummary(){
+  const th=(ab,fl)=>`<th><span class="ab">${ab}</span><span class="fl">${fl}</span></th>`;
   let h='<tr><th>Bowler</th>';
-  for(let g=1;g<=S.meta.games;g++) h+=`<th>G${g}</th>`;
-  h+='<th>Ser</th><th>+H</th><th>Avg</th></tr>';
+  for(let g=1;g<=S.meta.games;g++) h+=th('G'+g,'Game '+g);
+  h+=th('Ser','Series')+th('+H','Handicap Series')+th('Avg','Average')+'</tr>';
   S.bowlers.forEach((b,bi)=>{
     const tots=b.games.slice(0,S.meta.games).map(g=>gameStarted(g)?gameTotal(g):null);
     const played=tots.filter(t=>t!==null); const ser=played.reduce((a,c)=>a+c,0);
