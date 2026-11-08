@@ -82,12 +82,14 @@ table.sum{border-collapse:collapse;width:100%;font-size:14px}
 .sum th{font-size:11px;color:var(--muted);font-weight:600}
 .sum th:first-child,.sum td:first-child{text-align:left;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:6px}
-.keypad{position:absolute;z-index:20;display:none;grid-template-columns:repeat(6,1fr);gap:4px;width:252px;padding:6px;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.22)}
+.keypad{position:absolute;z-index:20;display:none;grid-template-columns:repeat(6,1fr);gap:5px;width:252px;padding:7px;background:#14233f;border:1px solid #0b1528;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.35)}
 .keypad.open{display:grid}
 .keypad button[hidden]{display:none}
-.keypad .done{grid-column:span 2;background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.keypad button{padding:0;height:36px;font-weight:700;font-size:15px;border-radius:6px}
-.keypad .mk{background:var(--cell)}
+.keypad button{padding:0;height:36px;font-weight:700;font-size:16px;border-radius:7px;background:#2c4a80;color:#fff;border:1px solid #3a5d9c}
+.keypad button:active{background:#4a72b8}
+.keypad .mk{background:#f2b705;color:#14233f;border-color:#d9a404}
+.keypad .nav{background:#22385f;color:#cfdaf0;border-color:#2c4a80}
+.keypad .done{grid-column:span 2;background:#2e9d5b;color:#fff;border-color:#268a4f}
 .hint{font-size:12px;color:var(--muted);margin:4px 2px 0}
 #status{font-size:13px;margin-top:6px}
 #status.ok{color:var(--ok)}#status.err{color:var(--bad)}
@@ -410,7 +412,7 @@ function updatePad(btn){
 }
 function closePad(){ $('keypad').classList.remove('open'); if(focused) focused.classList.remove('sel'); focused=null; }
 const keys=['1','2','3','4','5','6','7','8','9','-','X','/','F','⌫','←','→','Done'];
-keys.forEach(k=>{ const b=document.createElement('button'); b.textContent=k; b.className=k==='Done'?'done':('-X/F⌫←→'.includes(k)?'mk':''); if(/^[1-9X/F-]$/.test(k)) b.dataset.key=k;
+keys.forEach(k=>{ const b=document.createElement('button'); b.textContent=k; b.className=k==='Done'?'done':('⌫←→'.includes(k)?'nav':('-X/F'.includes(k)?'mk':'')); if(/^[1-9X/F-]$/.test(k)) b.dataset.key=k;
   b.onmousedown=e=>e.preventDefault();
   b.onclick=()=>{ if(k==='Done'){closePad();return;} if(!focused||!document.body.contains(focused)){closePad();return;}
     if(k==='⌫') backspace(focused); else if(k==='←') move(focused,-1); else if(k==='→') move(focused,1); else enter(focused,k); };
