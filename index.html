@@ -578,7 +578,7 @@ window.addEventListener('resize',()=>{ if(focused&&$('keypad').classList.contain
 
 /* ---------- meta ---------- */
 [['m-center','center'],['m-event','event'],['m-date','date'],['m-lane','lane']].forEach(([id,k])=>{ $(id).value=S.meta[k]||''; $(id).oninput=()=>{S.meta[k]=$(id).value;save();}; });
-function openAdd(){ $('addPanel').hidden=false; $('addBowler').hidden=true; const t=$('addNames'); t.value=''; t.focus(); }
+function openAdd(){ $('addGo').textContent=S.bowlers.some(b=>!isBlank(b))?'Add bowlers':'Begin Bowling'; $('addPanel').hidden=false; $('addBowler').hidden=true; const t=$('addNames'); t.value=''; t.focus(); }
 function closeAdd(){ $('addPanel').hidden=true; $('addBowler').hidden=false; }
 $('addBowler').onclick=openAdd;
 $('addCancel').onclick=closeAdd;
