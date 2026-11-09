@@ -110,9 +110,6 @@ details[open]>summary::after{content:"▴"}
 .actions .clear{grid-column:1/-1;color:#fff;background:#2e9d5b;border-color:#268a4f;font-weight:700}
 .add{width:100%;margin-top:6px;border-style:dashed;color:var(--muted)}
 .add.primary{border-style:solid;color:var(--accent-ink);padding:9px}
-.add.begin{border:2px solid #268a4f;background:#2e9d5b;color:#fff;font-weight:700;font-size:17px;padding:11px}
-.addMore{display:block;margin:6px auto 0;background:none;border:none;color:var(--muted);text-decoration:underline;font-size:14px;padding:4px 8px}
-.addMore[hidden]{display:none}
 table.sum{border-collapse:collapse;width:100%;font-size:14px}
 .sum th,.sum td{border-bottom:1px solid var(--line);padding:5px 4px;text-align:right}
 .sum th{font-size:11px;color:var(--muted);font-weight:600}
@@ -232,7 +229,6 @@ body.printing{width:10.2in}
   </div>
   <div class="printMeta print-only" id="printMeta"></div>
   <button class="add no-print" id="addBowler">+ Add Bowlers</button>
-  <button class="addMore no-print" id="addMore" hidden>+ Add more bowlers</button>
   <div class="addPanel no-print" id="addPanel" hidden>
     <label for="addNames">Bowler names — one per line, or separate with commas. Add a number after a name for handicap (e.g. Don 12).</label>
     <textarea id="addNames" rows="4" placeholder="Don&#10;Mary 15&#10;Pat, Sam"></textarea>
@@ -447,13 +443,8 @@ function refresh(){
   const empty=!S.bowlers.length;
   $('tabs').style.display=empty?'none':'';
   $('sheetCard').style.display=empty?'none':'';
-  const begun=S.bowlers.some(b=>b.games[cur]&&gameStarted(b.games[cur]));
-  const adding=!$('addPanel').hidden;
-  const ready=!empty&&!begun&&!fin;
-  $('addBowler').className='add no-print'+(empty?' primary':(ready?' begin':''));
-  $('addBowler').textContent=empty?'+ Add Bowlers':'Begin Bowling';
-  $('addBowler').hidden=adding||(!empty&&!ready);
-  $('addMore').hidden=adding||empty||fin;
+  $('addBowler').className='add no-print'+(empty?' primary':'');
+  $('addBowler').textContent=empty?'+ Add Bowlers':'+ Add Bowlers';
   $('summary').closest('.card').style.display=empty?'none':'';
 }
 function renderSummary(){
@@ -587,17 +578,10 @@ window.addEventListener('resize',()=>{ if(focused&&$('keypad').classList.contain
 
 /* ---------- meta ---------- */
 [['m-center','center'],['m-event','event'],['m-date','date'],['m-lane','lane']].forEach(([id,k])=>{ $(id).value=S.meta[k]||''; $(id).oninput=()=>{S.meta[k]=$(id).value;save();}; });
-function openAdd(){ $('addPanel').hidden=false; $('addBowler').hidden=true; $('addMore').hidden=true; const t=$('addNames'); t.value=''; t.focus(); }
-function closeAdd(){ $('addPanel').hidden=true; }
-function beginBowling(){
-  const first=document.querySelector(`.game-block:not(.print-only) .ball[data-b="0"][data-f="0"][data-k="0"]`);
-  if(!first) return;
-  first.closest('.bw').scrollIntoView({block:'start',behavior:'smooth'});
-  select(first,true);
-}
-$('addBowler').onclick=()=>{ if(S.bowlers.length) beginBowling(); else openAdd(); };
-$('addMore').onclick=openAdd;
-$('addCancel').onclick=()=>{ closeAdd(); refresh(); };
+function openAdd(){ $('addPanel').hidden=false; $('addBowler').hidden=true; const t=$('addNames'); t.value=''; t.focus(); }
+function closeAdd(){ $('addPanel').hidden=true; $('addBowler').hidden=false; }
+$('addBowler').onclick=openAdd;
+$('addCancel').onclick=closeAdd;
 $('addGo').onclick=()=>{
   const entries=$('addNames').value.split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean);
   if(!entries.length){ $('addNames').focus(); return; }
