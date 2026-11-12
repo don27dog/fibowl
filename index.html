@@ -256,6 +256,11 @@ body.printing .soundBtn,body.printing .markPop{display:none!important}
 .lgFile{display:inline-block;margin-top:6px;color:var(--accent);text-decoration:underline;font-size:13px;cursor:pointer}
 .lgPanel .addBtns button{font-size:16px}
 .bw.tA,.bw.tB{border-left:5px solid var(--tc)}
+.lgMeta{grid-column:1/-1;border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-size:14px}
+.lgMeta[hidden]{display:none}
+.lgMeta div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px solid var(--line)}
+.lgMeta div:first-child{border-top:none}
+.lgMeta span{color:var(--muted)}.lgMeta b{text-align:right}
 .keypad.tA{border:4px solid #1f5fbf}.keypad.tB{border:4px solid #d9480f}
 .tmTag{font-size:11px;font-weight:700;padding:1px 7px;border-radius:9px;white-space:nowrap;max-width:110px;overflow:hidden;text-overflow:ellipsis;color:#fff;background:var(--tc)}
 .h2h{border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin:0 0 8px}
@@ -336,6 +341,7 @@ body.printing .soundBtn,body.printing .markPop{display:none!important}
       <label>Type of bowling<select id="m-event"><option>Open Bowling</option><option>League</option><option>Tournament</option></select></label>
       <label>Date<input id="m-date" type="date"></label>
       <label>Lane(s)<input id="m-lane" placeholder="e.g. 7-8"></label>
+      <div class="lgMeta" id="lgMeta" hidden></div>
     </div>
   </details>
 </div>
@@ -519,6 +525,9 @@ function refresh(){
   // only offer Finish Bowling once someone has scored
   $('newSheet').style.display=S.bowlers.some(b=>b.games.some(g=>g&&gameStarted(g)))?'':'none';
   $('leagueBtn').hidden=!empty||!$('leaguePanel').hidden||!$('addPanel').hidden;
+  // nothing to print or export until there are bowlers on the sheet
+  $('print').style.display=$('export').style.display=empty?'none':'';
+  $('print').parentElement.style.display=empty?'none':'';
   renderH2H();
 }
 function renderSummary(){
@@ -533,8 +542,25 @@ function renderSummary(){
       `<td><b>${played.length?ser:''}</b></td><td>${played.length?ser+(b.hdcp||0)*played.length:''}</td><td>${played.length?Math.floor(ser/played.length):''}</td></tr>`;
   });
   $('summary').innerHTML=h;
-  const m=S.meta, ev=S.league?S.league.name+' · Week '+S.league.week:m.event; $('printMeta').textContent=[m.center,ev,m.date,m.lane?'Lane '+m.lane:''].filter(Boolean).join(' · ');
-  $('metaLine').textContent=[ev,m.date,m.lane?'Lane '+m.lane:''].filter(Boolean).join(' · ');
+  syncMeta();
+  const m=S.meta, ev=S.league?S.league.name+' · Week '+S.league.week:m.event; $('printMeta').textContent=[m.center,ev,m.date,m.lane?(/[-,&]/.test(m.lane)?'Lanes ':'Lane ')+m.lane:''].filter(Boolean).join(' · ');
+  const mt=S.league&&S.league.teams.a.name?S.league.teams.a.name+' vs '+S.league.teams.b.name:'';
+  $('metaLine').textContent=[ev,mt,m.date,m.lane?(/[-,&]/.test(m.lane)?'Lanes ':'Lane ')+m.lane:''].filter(Boolean).join(' · ');
+}
+// fill Sheet details from what's being bowled: today's date for a new sheet, and the league, week and match on league night
+function syncMeta(){
+  const m=S.meta;
+  if(!S.bowlers.length&&m.date!==today()){ m.date=today(); save(); }
+  if(S.league&&m.event!=='League') m.event='League';
+  [['m-center','center'],['m-event','event'],['m-date','date'],['m-lane','lane']].forEach(([id,k])=>{ const el=$(id);
+    if(el&&document.activeElement!==el&&el.value!==(m[k]||'')) el.value=m[k]||''; });
+  const box=$('lgMeta'), L=S.league; if(!box) return;
+  if(!L){ box.hidden=true; box.innerHTML=''; return; }
+  const A=L.teams.a, B=L.teams.b, mine=L.mine&&L.mine!=='both'?L.teams[L.mine].name+' (this phone)':'Both teams';
+  const row=(k,v)=>`<div><span>${k}</span><b>${esc(v)}</b></div>`;
+  box.hidden=false;
+  box.innerHTML=row('League',L.name)+row('Week',String(L.week))+row('Match',A.name+' vs '+B.name)+(L.lanes?row('Lanes',L.lanes):'')+row('Scoring',mine)+
+    row('Games',L.K.G+' · handicap '+L.K.pct+'% of '+L.K.basis);
 }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -797,6 +823,10 @@ function lgRoundRobin(ids,wi){ ids=ids.slice(); if(ids.length%2) ids.push(null);
 function lgMatchups(d,w){ const wk=(d.weeks||[]).find(x=>x.week===w); const ids=d.config.teams.map(t=>t.id);
   return ((wk&&wk.matchups)||lgRoundRobin(ids,w-1)).filter(m=>m.a&&m.b&&ids.includes(m.a)&&ids.includes(m.b)); }
 const lgTeam=(d,id)=>d.config.teams.find(t=>t.id===id);
+// lanes for a match, same rule as the League Secretary: that week's lanes, or the league's usual lanes (rotated weekly if chosen)
+function lgLanes(d,w,a,b){ const ms=lgMatchups(d,w), mi=ms.findIndex(m=>(m.a===a&&m.b===b)||(m.a===b&&m.b===a)); if(mi<0) return '';
+  if(ms[mi].lanes) return ms[mi].lanes; const c=d.config, n=Math.floor((c.teams.length)/2), list=(c.matchLanes||[]).slice(0,n);
+  if(!list.some(Boolean)) return ''; return list[c.rotateLanes?((mi+(w-1))%n):mi]||''; }
 function lgSetup(rec,week){ const d=rec.data, K=lgCfg(d), w=week||lgNextWeek(d,K);
   const m=lgMatchups(d,w)[0]||{a:d.config.teams[0].id,b:d.config.teams[1].id};
   LG={rec,d,K,w,a:m.a,b:m.b,line:{},st:lgStats(d,w,K),err:''}; }
@@ -837,7 +867,7 @@ function renderLeaguePanel(){
     return `<div class="lgTeam t${side.toUpperCase()}"><h3>${esc(t.name)}</h3>${rows}</div>`; };
   P.innerHTML=`<h2>League night</h2><p class="lgName">${esc(c.name||'League')}${c.season?' · '+esc(c.season):''}</p>
     <label>Week<select id="lgWeek">${Array.from({length:K.weeks},(_,i)=>`<option value="${i+1}"${i+1===w?' selected':''}>Week ${i+1}</option>`).join('')}</select></label>
-    ${ms.length?`<div class="lgLab">Week ${w} matches. Tap the one you're scoring.</div><div class="chips">${ms.map((m,i)=>`<button class="chip${m.a===LG.a&&m.b===LG.b?' on':''}" data-m="${i}">${esc(lgTeam(d,m.a).name)} vs ${esc(lgTeam(d,m.b).name)}</button>`).join('')}</div>`:''}
+    ${ms.length?`<div class="lgLab">Week ${w} matches. Tap the one you're scoring.</div><div class="chips">${ms.map((m,i)=>`<button class="chip${m.a===LG.a&&m.b===LG.b?' on':''}" data-m="${i}">${esc(lgTeam(d,m.a).name)} vs ${esc(lgTeam(d,m.b).name)}${lgLanes(d,w,m.a,m.b)?`<small style="display:block;font-weight:400;font-size:11px">Lanes ${esc(lgLanes(d,w,m.a,m.b))}</small>`:''}</button>`).join('')}</div>`:''}
     <div class="lgPick"><label>Team<select id="lgA">${opt(LG.a)}</select></label><span>vs</span><label>Team<select id="lgB">${opt(LG.b)}</select></label></div>
     ${LEAGUE_API?`<div class="lgLab">This phone is scoring</div><div class="chips">${['a','b'].map(sd=>`<button class="chip${LG.mine===sd?' on':''}" data-mine="${sd}">${esc(lgTeam(d,LG[sd]).name)}</button>`).join('')}<button class="chip${LG.mine==='both'?' on':''}" data-mine="both">Both teams</button></div>
       <p class="lgNote">${LG.mine&&LG.mine!=='both'?`The other team's phone scores ${esc(lgTeam(d,LG[LG.mine==='a'?'b':'a']).name)}. Both phones show the whole match.`:'Using two phones? Each picks its own team here.'}</p>`:''}
@@ -901,7 +931,8 @@ async function startLeague(){
   const st={}; ['a','b'].forEach(sd=>{ if(!mineHas(sd)) lgTeam(d,LG[sd]).players.forEach(p=>{ st[p.id]=LG.st[p.id]; }); }); (d.config.subs||[]).forEach(x=>{ st[x.id]=LG.st[x.id]; });
   const lineVals=Object.values(LG.line), newSubs=(LG.rec.newSubs||[]).filter(x=>lineVals.includes(x.id));
   S.bowlers=bowlers; S.league={name:d.config.name||'League',week:w,K,teams,mine,st,newSubs};
-  S.meta.event='League'; $('m-event').value='League'; S.meta.games=1; S.meta.cur=0; cur=0; delete S.meta.finished;
+  S.league.lanes=lgLanes(d,w,LG.a,LG.b); if(S.league.lanes) S.meta.lane=S.league.lanes;
+  S.meta.event='League'; $('m-event').value='League'; S.meta.date=today(); S.meta.games=1; S.meta.cur=0; cur=0; delete S.meta.finished;
   $('leaguePanel').hidden=true; $('leaguePanel').innerHTML=''; $('addBowler').hidden=false; LG=null;
   renderAll(); const h=$('sheetCard'); if(h) h.scrollIntoView({block:'start',behavior:'smooth'});
   lgPull();
