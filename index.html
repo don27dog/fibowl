@@ -284,6 +284,19 @@ body.printing .soundBtn,body.printing .markPop{display:none!important}
 .h2h td small.thru{color:#1971c2}
 @media (prefers-color-scheme:dark){.h2h td small.thru{color:#74b0f0}}.lgSend.good{color:var(--ok)}
 @media (prefers-color-scheme:dark){.h2h td.win{background:rgba(46,157,91,.25)}.h2h td.win b,.h2hResult{color:var(--ok)}}
+.help h3{margin:0 0 6px;font-size:17px}
+.help p{margin:0 0 6px;line-height:1.45}
+.help ol{margin:0;padding-left:22px;line-height:1.5}
+.help li{margin-bottom:3px}
+.hSub{font-size:13px;font-weight:700;color:var(--muted);margin:10px 0 3px}
+.help .tag{font-style:normal;display:inline-block;padding:0 7px;border-radius:6px;font-size:13px;font-weight:700;line-height:1.6;white-space:nowrap}
+.help .tag.g{background:#2e9d5b;color:#fff}.help .tag.o{border:1.5px solid #2e9d5b;color:#2e9d5b}.help .tag.n{border:1px solid var(--line);color:var(--ink)}
+.help summary{font-weight:700;cursor:pointer;margin-top:12px}
+.kLeg{display:grid;grid-template-columns:auto 1fr;gap:7px 10px;align-items:center;margin-top:8px}
+.kLeg .k{min-width:36px;height:32px;padding:0 6px;border-radius:7px;background:#48484d;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px}
+.kLeg .k.done{background:#2e9d5b;font-size:14px}
+.kLeg span{line-height:1.35}
+.hEx{margin:10px 0 0!important;padding:8px 10px;border-radius:8px;background:var(--cell,#f3f3f1);font-size:13px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -296,12 +309,40 @@ body.printing .soundBtn,body.printing .markPop{display:none!important}
   </div>
   <div class="printMeta print-only" id="printMeta"></div>
   <button class="add no-print" id="addBowler">+ Add Bowlers</button>
-  <button class="add no-print" id="leagueBtn">League night</button>
+  <button class="add no-print" id="leagueBtn">League Bowlers</button>
   <div class="addPanel no-print" id="addPanel" hidden>
     <label for="addNames">Bowler names — one per line, or separate with commas. Add a number after a name for handicap (e.g. Don 12).</label>
     <textarea id="addNames" rows="4" placeholder="Don&#10;Mary 15&#10;Pat, Sam"></textarea>
     <div class="addBtns"><button id="addCancel">Cancel</button><button class="primary" id="addGo">Add bowlers</button></div>
   </div>
+</div>
+
+<div class="card no-print help" id="helpCard" hidden>
+  <h3>New to bowling? No problem.</h3>
+  <p>This sheet keeps score for you. Strikes, spares and bonus points are all added up automatically.</p>
+  <div class="hSub">Bowling a game</div>
+  <ol><li>Tap <b>+ Add Bowlers</b> and type everyone’s names.</li>
+   <li>Tap the first box to open the keypad.</li>
+   <li>After each ball, tap how many pins fell. The sheet moves to the next bowler on its own.</li></ol>
+  <div class="hSub">When a game ends</div>
+  <ol start="4"><li>Tap <span class="tag g">Begin New Game</span> to play another. Everyone’s scores so far are kept.</li></ol>
+  <div class="hSub">Done for the night</div>
+  <ol start="5"><li>Tap <span class="tag o">Finish Bowling</span>.</li>
+   <li>To keep your scores, tap <span class="tag n">Print</span> or <span class="tag n">Export</span> (saves a file or sends it from your phone).</li>
+   <li>Tap <span class="tag n">Exit App</span> to clear the sheet for the next group.</li></ol>
+  <details><summary>What the keypad buttons mean</summary>
+   <div class="kLeg">
+    <span class="k">1–9</span><span>How many pins fell with that ball</span>
+    <span class="k">X</span><span><b>Strike</b>: all 10 pins down with the first ball</span>
+    <span class="k">/</span><span><b>Spare</b>: the rest of the pins down with the second ball</span>
+    <span class="k">-</span><span><b>Miss</b>: no pins fell (a gutter ball)</span>
+    <span class="k">F</span><span><b>Foul</b>: stepped over the line, so that ball scores 0</span>
+    <span class="k">⌫</span><span>Undo the last box</span>
+    <span class="k">← →</span><span>Move to the box before or after</span>
+    <span class="k done">Done</span><span>Close the keypad</span>
+   </div>
+   <p class="hEx">Each bowler gets 2 balls per frame and 10 frames per game. A strike or spare earns bonus pins from the next ball or two, added in for you. A strike or spare in the 10th frame earns an extra ball.</p>
+  </details>
 </div>
 
 <div class="card no-print lgPanel" id="leaguePanel" hidden></div>
@@ -525,6 +566,7 @@ function refresh(){
   // only offer Finish Bowling once someone has scored
   $('newSheet').style.display=S.bowlers.some(b=>b.games.some(g=>g&&gameStarted(g)))?'':'none';
   $('leagueBtn').hidden=!empty||!$('leaguePanel').hidden||!$('addPanel').hidden;
+  $('helpCard').hidden=!empty||!$('leaguePanel').hidden;
   // nothing to print or export until there are bowlers on the sheet
   $('print').style.display=$('export').style.display=empty?'none':'';
   $('print').parentElement.style.display=empty?'none':'';
@@ -841,7 +883,7 @@ const lgFileLink='<label class="lgFile">Load a league file instead<input type="f
 function openLeague(){
   closePad(); if(!$('addPanel').hidden) closeAdd();
   const P=$('leaguePanel'); P.hidden=false; $('leagueBtn').hidden=true; $('addBowler').hidden=true; refresh();
-  P.innerHTML='<h2>League night</h2><p class="lgName">Loading the league…</p>';
+  P.innerHTML='<h2>League Bowlers</h2><p class="lgName">Loading the league…</p>';
   P.scrollIntoView({block:'start',behavior:'smooth'});
   lgFetch().then(rec=>{ if(rec) lgSetup(rec); else LG=null; renderLeaguePanel(); });
 }
@@ -849,7 +891,7 @@ function closeLeague(){ $('leaguePanel').hidden=true; $('leaguePanel').innerHTML
 function cancelLeague(){ const was=!!S.league; closeLeague(); if(!was&&S.meta.event==='League'){ S.meta.event='Open Bowling'; $('m-event').value='Open Bowling'; save(); refresh(); } }
 function renderLeaguePanel(){
   const P=$('leaguePanel');
-  if(!LG){ P.innerHTML=`<h2>League night</h2><p class="lgErr">Couldn't load the league from the website. Check the Wi-Fi and try again, or load the league file from this device.</p>
+  if(!LG){ P.innerHTML=`<h2>League Bowlers</h2><p class="lgErr">Couldn't load the league from the website. Check the Wi-Fi and try again, or load the league file from this device.</p>
     <div class="addBtns"><button id="lgCancel">Cancel</button><button class="primary" id="lgRetry">Try again</button></div><p class="lgNote">${lgFileLink}</p>`;
     $('lgCancel').onclick=cancelLeague; $('lgRetry').onclick=openLeague; wireFile(); return; }
   const {d,K,w}=LG, c=d.config, ms=lgMatchups(d,w);
@@ -865,7 +907,7 @@ function renderLeaguePanel(){
       const info=ch==='abs'?`Absent · blind ${Math.max(0,e.avg-K.pen)} + ${e.hcp} hdcp`:(ch==='bowl'?'':esc(who.name)+' subbing · ')+`Avg ${e.avg||'—'}${e.est&&who.n<3?' (starting)':''} · Hdcp ${e.hcp}`;
       return `<div class="lgRow${ch==='abs'?' off':''}"><div>${vac?'Vacant spot':esc(p.name)}<small>${info}</small></div><select data-line="${p.id}" aria-label="${vac?'Vacant spot':esc(p.name)}">${opts}</select></div>`; }).join('');
     return `<div class="lgTeam t${side.toUpperCase()}"><h3>${esc(t.name)}</h3>${rows}</div>`; };
-  P.innerHTML=`<h2>League night</h2><p class="lgName">${esc(c.name||'League')}${c.season?' · '+esc(c.season):''}</p>
+  P.innerHTML=`<h2>League Bowlers</h2><p class="lgName">${esc(c.name||'League')}${c.season?' · '+esc(c.season):''}</p>
     <label>Week<select id="lgWeek">${Array.from({length:K.weeks},(_,i)=>`<option value="${i+1}"${i+1===w?' selected':''}>Week ${i+1}</option>`).join('')}</select></label>
     ${ms.length?`<div class="lgLab">Week ${w} matches. Tap the one you're scoring.</div><div class="chips">${ms.map((m,i)=>`<button class="chip${m.a===LG.a&&m.b===LG.b?' on':''}" data-m="${i}">${esc(lgTeam(d,m.a).name)} vs ${esc(lgTeam(d,m.b).name)}${lgLanes(d,w,m.a,m.b)?`<small style="display:block;font-weight:400;font-size:11px">Lanes ${esc(lgLanes(d,w,m.a,m.b))}</small>`:''}</button>`).join('')}</div>`:''}
     <div class="lgPick"><label>Team<select id="lgA">${opt(LG.a)}</select></label><span>vs</span><label>Team<select id="lgB">${opt(LG.b)}</select></label></div>
