@@ -256,6 +256,7 @@ body.printing .soundBtn,body.printing .markPop{display:none!important}
 .lgFile{display:inline-block;margin-top:6px;color:var(--accent);text-decoration:underline;font-size:13px;cursor:pointer}
 .lgPanel .addBtns button{font-size:16px}
 .bw.tA,.bw.tB{border-left:5px solid var(--tc)}
+.keypad.tA{border:4px solid #1f5fbf}.keypad.tB{border:4px solid #d9480f}
 .tmTag{font-size:11px;font-weight:700;padding:1px 7px;border-radius:9px;white-space:nowrap;max-width:110px;overflow:hidden;text-overflow:ellipsis;color:#fff;background:var(--tc)}
 .h2h{border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin:0 0 8px}
 .h2h[hidden]{display:none}
@@ -274,7 +275,9 @@ body.printing .soundBtn,body.printing .markPop{display:none!important}
 .h2hNote{font-size:12px;color:var(--muted);margin:5px 0 0}
 .h2hResult{margin:6px 0 2px;font-weight:800;color:#1e6b33;text-align:center;font-size:16px}
 .h2h .linkBtn{margin:2px 0 0;font-size:13px}
-.lgSend{font-weight:600;color:var(--muted)}.lgSend.good{color:var(--ok)}
+.lgSend{font-weight:600;color:var(--muted)}
+.h2h td small.thru{color:#1971c2}
+@media (prefers-color-scheme:dark){.h2h td small.thru{color:#74b0f0}}.lgSend.good{color:var(--ok)}
 @media (prefers-color-scheme:dark){.h2h td.win{background:rgba(46,157,91,.25)}.h2h td.win b,.h2hResult{color:var(--ok)}}
 </style>
 </head>
@@ -437,6 +440,7 @@ function frameScores(game){
 function gameTotal(game){ const fs=frameScores(game); let t=0; fs.forEach(v=>{if(v!==null)t=v;}); return t; }
 function gameStarted(game){ return game.some(fr=>fr.some(c=>c!=='')); }
 function gameDone(game){ return frameScores(game)[9]!==null; }
+function framesScored(game){ return game?frameScores(game).filter(v=>v!==null).length:0; }
 
 /* ---------- rendering ---------- */
 function renderTabs(){ $('tabs').textContent='Game '+(cur+1); }
@@ -605,6 +609,8 @@ function select(btn,open){
 }
 function openPad(btn){
   const pad=$('keypad'); pad.classList.add('open'); updateStartHint();
+  // in league play the keypad's border takes the colour of the team being scored
+  const bw=btn.closest('.bw'); pad.classList.toggle('tA',!!bw&&bw.classList.contains('tA')); pad.classList.toggle('tB',!!bw&&bw.classList.contains('tB'));
   updatePad(btn);
   // place the keypad just below the whole scorecard of the bowler who is up
   const card=btn.closest('.bw').getBoundingClientRect();
@@ -820,11 +826,14 @@ function renderLeaguePanel(){
   const opt=(id)=>c.teams.map(t=>`<option value="${t.id}"${t.id===id?' selected':''}>${esc(t.name)}</option>`).join('');
   const team=(side)=>{ const t=lgTeam(d,LG[side]);
     const rows=t.players.map(p=>{
-      if(lgIsVac(p,w)){ const sc=Math.min(K.vac,K.basis); return `<div class="lgRow off"><div>Vacant<small>${sc} + ${Math.max(0,K.basis-sc)} hdcp each game</small></div></div>`; }
-      const ch=LG.line[p.id]||'bowl', who=ch==='bowl'||ch==='abs'?LG.st[p.id]:LG.st[ch], e=lgEst(who,[],K);
-      const info=ch==='abs'?`Absent · blind ${Math.max(0,e.avg-K.pen)} + ${e.hcp} hdcp`:(ch==='bowl'?'':esc(who.name)+' subbing · ')+`Avg ${e.avg||'—'}${e.est&&who.n<3?' (starting)':''} · Hdcp ${e.hcp}`;
+      const vac=lgIsVac(p,w), ch=LG.line[p.id]||(vac?'vac':'bowl');
       const subs=(c.subs||[]).map(x=>`<option value="${x.id}"${ch===x.id?' selected':''}>Sub: ${esc(x.name)}</option>`).join('');
-      return `<div class="lgRow${ch==='abs'?' off':''}"><div>${esc(p.name)}<small>${info}</small></div><select data-line="${p.id}" aria-label="${esc(p.name)}"><option value="bowl">Bowling</option><option value="abs"${ch==='abs'?' selected':''}>Absent</option>${subs}<option value="__new">+ New sub…</option></select></div>`; }).join('');
+      const opts=(vac?'<option value="vac">Vacant</option>':`<option value="bowl">Bowling</option><option value="abs"${ch==='abs'?' selected':''}>Absent</option>`)+subs+'<option value="__new">+ New sub…</option>';
+      if(vac&&ch==='vac'){ const sc=Math.min(K.vac,K.basis);
+        return `<div class="lgRow off"><div>Vacant<small>${sc} + ${Math.max(0,K.basis-sc)} hdcp each game, or pick a sub</small></div><select data-line="${p.id}" aria-label="Vacant spot">${opts}</select></div>`; }
+      const who=ch==='bowl'||ch==='abs'?LG.st[p.id]:LG.st[ch], e=lgEst(who,[],K);
+      const info=ch==='abs'?`Absent · blind ${Math.max(0,e.avg-K.pen)} + ${e.hcp} hdcp`:(ch==='bowl'?'':esc(who.name)+' subbing · ')+`Avg ${e.avg||'—'}${e.est&&who.n<3?' (starting)':''} · Hdcp ${e.hcp}`;
+      return `<div class="lgRow${ch==='abs'?' off':''}"><div>${vac?'Vacant spot':esc(p.name)}<small>${info}</small></div><select data-line="${p.id}" aria-label="${vac?'Vacant spot':esc(p.name)}">${opts}</select></div>`; }).join('');
     return `<div class="lgTeam t${side.toUpperCase()}"><h3>${esc(t.name)}</h3>${rows}</div>`; };
   P.innerHTML=`<h2>League night</h2><p class="lgName">${esc(c.name||'League')}${c.season?' · '+esc(c.season):''}</p>
     <label>Week<select id="lgWeek">${Array.from({length:K.weeks},(_,i)=>`<option value="${i+1}"${i+1===w?' selected':''}>Week ${i+1}</option>`).join('')}</select></label>
@@ -876,14 +885,14 @@ async function startLeague(){
   if(LG.a===LG.b){ LG.err='Pick two different teams.'; renderLeaguePanel(); return; }
   if(LEAGUE_API&&!LG.mine){ LG.err='Pick which team this phone is scoring.'; renderLeaguePanel(); return; }
   const mine=LEAGUE_API?LG.mine:'both', mineHas=sd=>mine==='both'||mine===sd;
-  const used={}; for(const v of Object.values(LG.line)) if(v!=='bowl'&&v!=='abs'){ if(used[v]){ LG.err=LG.st[v].name+' is subbing for two bowlers. Pick a different sub.'; renderLeaguePanel(); return; } used[v]=1; }
+  const used={}; for(const v of Object.values(LG.line)) if(v!=='bowl'&&v!=='abs'&&v!=='vac'){ if(used[v]){ LG.err=LG.st[v].name+' is subbing for two bowlers. Pick a different sub.'; renderLeaguePanel(); return; } used[v]=1; }
   if(S.bowlers.some(b=>b.games.some(gameStarted)) && !confirm('Start a league sheet? This clears the scores on the current sheet, so print or export them first if you need them.')) return;
   const {d,K,w}=LG, bowlers=[], teams={};
   ['a','b'].forEach(side=>{ const t=lgTeam(d,LG[side]), fixed=[];
     if(!mineHas(side)){ teams[side]={id:t.id,name:t.name,fixed,remote:true,roster:t.players.map(p=>({id:p.id,vac:lgIsVac(p,w)}))}; return; }
     t.players.forEach(p=>{
-      if(lgIsVac(p,w)){ const sc=Math.min(K.vac,K.basis); fixed.push({name:'Vacant',kind:'vac',score:sc,hcp:Math.max(0,K.basis-sc)}); return; }
-      const ch=LG.line[p.id]||'bowl';
+      const ch=LG.line[p.id]||(lgIsVac(p,w)?'vac':'bowl');
+      if(ch==='vac'){ const sc=Math.min(K.vac,K.basis); fixed.push({name:'Vacant',kind:'vac',slot:p.id,score:sc,hcp:Math.max(0,K.basis-sc)}); return; }
       if(ch==='abs'){ const e=lgEst(LG.st[p.id],[],K); fixed.push({name:p.name,kind:'abs',slot:p.id,score:Math.max(0,e.avg-K.pen),hcp:e.hcp}); return; }
       const who=ch==='bowl'?LG.st[p.id]:LG.st[ch], e=lgEst(who,[],K);
       bowlers.push({name:who.name,hdcp:e.hcp,games:[],team:side,slot:p.id,subId:ch==='bowl'?null:ch,subFor:ch==='bowl'?null:p.name,lg:{pins:who.pins,n:who.n,start:who.start}}); });
@@ -904,16 +913,18 @@ function lgSync(){ if(!S.league) return; const K=S.league.K;
     if(e.hcp!==b.hdcp){ b.hdcp=e.hcp; document.querySelectorAll(`[data-hd="${bi}"]`).forEach(i=>i.value=b.hdcp||''); } }); }
 function lgRemoteSide(side){ const L=S.league, K=L.K, T=L.teams[side], games=(L.remote&&L.remote.games)||{}, rows=[];
   T.roster.forEach(p=>{
-    if(p.vac){ const sc=Math.min(K.vac,K.basis); rows.push({fixed:sc,hcp:Math.max(0,K.basis-sc)}); return; }
-    const e=games[p.id]; if(!e){ rows.push({unknown:true,hcp:0}); return; }
+    const e=games[p.id];
+    if(p.vac&&!(e&&!e.abs&&e.sub)){ const sc=Math.min(K.vac,K.basis); rows.push({fixed:sc,hcp:Math.max(0,K.basis-sc)}); return; }
+    if(!e){ rows.push({unknown:true,hcp:0}); return; }
     if(e.abs){ const x=lgEst(L.st[p.id]||{},[],K); rows.push({fixed:Math.max(0,x.avg-K.pen),hcp:x.hcp}); return; }
     const who=(e.sub&&L.st[e.sub])||L.st[p.id]||{}, g=(e.g||[]).slice(0,K.G);
-    rows.push({g,hcp:lgEst(who,g.filter(v=>v!==null&&v!==undefined),K).hcp}); });
+    rows.push({g,live:e.live||[],hcp:lgEst(who,g.filter(v=>v!==null&&v!==undefined),K).hcp}); });
   const hc=rows.reduce((a,r)=>a+r.hcp,0), unknown=rows.some(r=>r.unknown), out=[];
-  for(let g=0;g<K.G;g++){ const has=r=>r.g&&r.g[g]!==null&&r.g[g]!==undefined;
-    const started=rows.some(has), done=!unknown&&rows.every(r=>r.fixed!==undefined||has(r));
-    const scr=rows.reduce((a,r)=>a+(r.fixed||0)+(has(r)?r.g[g]:0),0);
-    out.push({started,done,show:started||done,scr,tot:scr+hc}); }
+  for(let g=0;g<K.G;g++){ const has=r=>r.g&&r.g[g]!==null&&r.g[g]!==undefined, lv=r=>!has(r)&&r.live&&r.live[g];
+    const started=rows.some(r=>has(r)||lv(r)), done=!unknown&&rows.every(r=>r.fixed!==undefined||has(r));
+    const scr=rows.reduce((a,r)=>a+(r.fixed||0)+(has(r)?r.g[g]:lv(r)?r.live[g].s:0),0);
+    const bowling=rows.filter(r=>r.fixed===undefined&&!r.unknown), thru=bowling.length?Math.min(...bowling.map(r=>has(r)?10:lv(r)?r.live[g].f:0)):10;
+    out.push({started,done,show:started||done,scr,tot:scr+hc,thru}); }
   const shown=out.filter(x=>x.show);
   return {T,hc,games:out,remote:true,heard:Object.keys(games).length>0,ser:shown.reduce((a,x)=>a+x.tot,0),serScr:shown.reduce((a,x)=>a+x.scr,0),allDone:out.every(x=>x.done)}; }
 async function lgPull(){ const L=S.league; if(!LEAGUE_API||!L||!L.mine||L.mine==='both') return;
@@ -932,7 +943,8 @@ function lgSide(side){ if(S.league.teams[side].remote) return lgRemoteSide(side)
   const fx=T.fixed.reduce((a,f)=>a+f.score,0), hc=bs.reduce((a,b)=>a+(b.hdcp||0),0)+T.fixed.reduce((a,f)=>a+f.hcp,0), games=[];
   for(let g=0;g<K.G;g++){ const gs=bs.map(b=>b.games[g]).filter(Boolean);
     const started=gs.some(gameStarted), done=gs.length===bs.length&&gs.every(gameDone), scr=gs.reduce((a,x)=>a+gameTotal(x),0)+fx;
-    games.push({started,done,show:started||done,scr,tot:scr+hc}); }
+    const thru=bs.length?Math.min(...bs.map(b=>framesScored(b.games[g]))):10;
+    games.push({started,done,show:started||done,scr,tot:scr+hc,thru}); }
   const shown=games.filter(x=>x.show);
   return {T,hc,games,ser:shown.reduce((a,x)=>a+x.tot,0),serScr:shown.reduce((a,x)=>a+x.scr,0),allDone:games.every(x=>x.done)}; }
 function lgResult(){ const K=S.league.K, R={a:lgSide('a'),b:lgSide('b'),pts:{a:0,b:0},win:[],sw:null};
@@ -945,7 +957,7 @@ function renderH2H(){ const box=$('h2h');
   if(!S.league||!S.bowlers.length){ box.hidden=true; box.innerHTML=''; return; }
   box.hidden=false; const L=S.league, K=L.K, R=lgResult();
   const row=sd=>{ const X=R[sd];
-    const cell=(x,won,part)=>x.show?`<td class="${won?'win':''}${part?' part':''}"><b>${x.tot}</b><small>${x.scr} scr</small></td>`:'<td></td>';
+    const cell=(x,won,part)=>x.show?`<td class="${won?'win':''}${part?' part':''}"><b>${x.tot}</b><small${part&&x.thru!==undefined?' class="thru"':''}>${part&&x.thru!==undefined?(x.thru?'thru frame '+x.thru:'frame 1'):x.scr+' scr'}</small></td>`:'<td></td>';
     return `<tr class="t${sd.toUpperCase()}"><td>${esc(X.T.name)}${L.mine===sd?'<small>this phone</small>':X.remote?'<small>other phone</small>':''}</td>`+X.games.map((x,g)=>cell(x,R.win[g]===sd,!x.done)).join('')+
       cell({show:X.games.some(x=>x.show),tot:X.ser,scr:X.serScr},R.sw===sd,!X.allDone)+`<td class="pts"><b>${lgPts(R.pts[sd])}</b></td></tr>`; };
   const fixedNote=['a','b'].map(sd=>R[sd].T.fixed.map(f=>`${esc(f.name)}${f.kind==='abs'?' (absent)':''} ${f.score}`).join(', ')).filter(Boolean);
@@ -974,9 +986,11 @@ function renderH2H(){ const box=$('h2h');
     $('newGameText').innerHTML=`Game ${cur+1} complete! ${line}`+(result?`<br>${result}.`:''); }
 }
 function lgPayload(){ const L=S.league; if(!L||!L.teams.a.id) return null; const K=L.K, entries={};
-  ['a','b'].forEach(sd=>L.teams[sd].fixed.forEach(f=>{ if(f.kind==='abs'&&f.slot) entries[f.slot]={abs:true,sub:null,g:[]}; }));
+  ['a','b'].forEach(sd=>L.teams[sd].fixed.forEach(f=>{ if(f.kind==='abs'&&f.slot) entries[f.slot]={abs:true,sub:null,g:[]}; else if(f.kind==='vac'&&f.slot) entries[f.slot]={abs:false,sub:null,g:[]}; }));
   S.bowlers.forEach(b=>{ if(!b.slot||!b.team) return;
-    entries[b.slot]={abs:false,sub:b.subId||null,g:Array.from({length:K.G},(_,g)=>b.games[g]&&gameDone(b.games[g])?gameTotal(b.games[g]):null)}; });
+    const live=Array.from({length:K.G},(_,g)=>{ const x=b.games[g]; return x&&gameStarted(x)&&!gameDone(x)?{s:gameTotal(x),f:framesScored(x)}:null; });
+    entries[b.slot]={abs:false,sub:b.subId||null,g:Array.from({length:K.G},(_,g)=>b.games[g]&&gameDone(b.games[g])?gameTotal(b.games[g]):null)};
+    if(live.some(Boolean)) entries[b.slot].live=live; });
   const out={week:L.week,date:S.meta.date||today(),a:L.teams.a.id,b:L.teams.b.id,entries};
   if(L.newSubs&&L.newSubs.length) out.newSubs=L.newSubs;
   return out; }
