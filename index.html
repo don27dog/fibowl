@@ -564,12 +564,16 @@ function refresh(){
   $('addBowler').textContent=empty?'+ Add Bowlers':'+ Add Bowlers';
   $('summary').closest('.card').style.display=empty?'none':'';
   // only offer Finish Bowling once someone has scored
-  $('newSheet').style.display=S.bowlers.some(b=>b.games.some(g=>g&&gameStarted(g)))?'':'none';
+  // the bottom Finish Bowling is only for stopping partway through a game; once a game is complete,
+  // the "Game complete" box has its own Finish Bowling, and after finishing the thank-you box takes over
+  $('newSheet').style.display=S.bowlers.some(b=>b.games.some(g=>g&&gameStarted(g)))&&$('newGameBox').hidden&&$('thanksBox').hidden?'':'none';
   $('leagueBtn').hidden=!empty||!$('leaguePanel').hidden||!$('addPanel').hidden;
   $('helpCard').hidden=!empty||!$('leaguePanel').hidden;
   // nothing to print or export until there are bowlers on the sheet
-  $('print').style.display=$('export').style.display=empty?'none':'';
-  $('print').parentElement.style.display=empty?'none':'';
+  // after Finish Bowling, the thank-you box has its own Print and Export
+  const noRow=empty||!$('thanksBox').hidden;
+  $('print').style.display=$('export').style.display=noRow?'none':'';
+  $('print').parentElement.style.display=noRow?'none':'';
   renderH2H();
 }
 function renderSummary(){
