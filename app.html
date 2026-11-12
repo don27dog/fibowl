@@ -1,0 +1,1291 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>League Secretary</title>
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#1d5aa0"><meta name="theme-color" media="(prefers-color-scheme: dark)" content="#15365e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style id="appcss">
+html{-webkit-text-size-adjust:100%}body{margin:0}[hidden]{display:none!important}img{max-width:100%}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* Layout: score-sheet app — lane-blue header band, tab strip, ruled tables like a league recap sheet */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --ink:#15212c; --muted:#5b6876; --line:#d9dfe5;
+  --lane:#1d5aa0; --lane-ink:#ffffff; --pin:#c4313b; --maple:#c99550; --good:#1f7a4d; --soft:#e8eef5;
+  --band:#1d5aa0; --band-ink:#ffffff; --field:#ffffff; --field-line:#c3ccd6;
+  --display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c1117; --surface:#18222d; --ink:#f3f6f9; --muted:#b8c3ce; --line:#3a4a5b;
+  --lane:#74adf2; --lane-ink:#06101b; --pin:#ff7f88; --maple:#ecc07c; --good:#62dba0; --soft:#243241;
+  --band:#15365e; --band-ink:#ffffff; --field:#0f1821; --field-line:#566a80; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c1117; --surface:#18222d; --ink:#f3f6f9; --muted:#b8c3ce; --line:#3a4a5b;
+  --lane:#74adf2; --lane-ink:#06101b; --pin:#ff7f88; --maple:#ecc07c; --good:#62dba0; --soft:#243241;
+  --band:#15365e; --band-ink:#ffffff; --field:#0f1821; --field-line:#566a80; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+.wrap{max-width:1100px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.band{background:var(--band);color:var(--band-ink)}
+header.band .wrap{padding-block:18px 0;display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap}
+.brand h1{flex:0 1 auto}
+.crest{display:inline-grid;grid-template-columns:auto auto;column-gap:14px;row-gap:5px;align-items:end;margin:0;font:inherit;text-transform:none;letter-spacing:0}
+.crest .wl{grid-column:1;grid-row:1;font:600 1.05rem/1 var(--body);letter-spacing:.03em;white-space:nowrap}
+.crest .logo{grid-column:1;grid-row:2}
+.crest .bl{grid-column:2;grid-row:2;align-self:end;font:800 1.9rem/.95 var(--display);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;padding-bottom:2px}
+@media (max-width:520px){.crest{column-gap:10px}.crest .wl{font-size:.95rem}.crest .bl{font-size:1.45rem;white-space:normal}}
+.logo{display:inline-flex;background:#ffffff;border-radius:10px;padding:6px 10px;line-height:0}
+.logo img{height:68px;width:auto}
+@media (max-width:520px){.logo img{height:54px}}
+h1{font-family:var(--display);font-weight:800;font-size:2.1rem;letter-spacing:.02em;margin:0;text-transform:uppercase;text-wrap:balance}
+.brand .meta{font-size:.85rem;opacity:.85}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+nav.tabs button{font:600 .9rem var(--body);background:transparent;color:inherit;border:0;padding:10px 14px;border-radius:8px 8px 0 0;cursor:pointer;opacity:.85;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{background:var(--bg);color:var(--ink);opacity:1}
+nav.tabs button:focus-visible{outline:2px solid var(--maple);outline-offset:-2px}
+main .wrap{padding-block:20px 48px;display:flex;flex-direction:column;gap:20px}
+h2{font-family:var(--display);font-weight:800;font-size:1.5rem;text-transform:uppercase;letter-spacing:.03em;margin:0}
+h3{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
+.sec{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;background:var(--soft)}
+th:first-child,td:first-child,.l{text-align:left}
+tr:last-child td{border-bottom:0}
+td.num-strong{font-weight:700}
+.rank{font-family:var(--display);font-weight:800;font-size:1.15rem;color:var(--lane);width:2.2em}
+.muted{color:var(--muted)}
+.small{font-size:.82rem}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:.75rem;font-weight:600;background:var(--soft);color:var(--muted)}
+.pill.win{background:color-mix(in srgb,var(--good) 22%,transparent);color:var(--good)}
+.pill.loss{background:color-mix(in srgb,var(--pin) 20%,transparent);color:var(--pin)}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+input,select{font:500 .95rem var(--body);color:var(--ink);background:var(--field);border:1px solid var(--field-line);border-radius:7px;padding:7px 9px;min-width:0}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--lane);outline-offset:1px}
+input.g{width:3.6em;text-align:center;padding:6px 2px;font-variant-numeric:tabular-nums}
+input.g.bad{border-color:var(--pin)}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--lane)}
+.btn{font:600 .9rem var(--body);border-radius:8px;padding:9px 16px;border:1px solid var(--lane);background:var(--lane);color:var(--lane-ink);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--lane)}
+.btn.danger{background:transparent;border-color:var(--pin);color:var(--pin)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.note{font-size:.85rem;color:var(--muted);max-width:68ch}
+.banner{border-left:4px solid var(--maple);background:var(--surface);padding:10px 14px;border-radius:0 8px 8px 0;font-size:.9rem}
+.hcpbox{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end}
+.formula{font-family:var(--display);font-size:1.25rem;font-weight:600;letter-spacing:.02em}
+.match{display:flex;flex-direction:column;gap:10px}
+.match-head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center}
+.match-head b{font-family:var(--display);font-size:1.2rem;text-transform:uppercase;letter-spacing:.02em}
+.vs{color:var(--pin);font-family:var(--display);font-weight:800;padding:0 6px}
+tr.tot td{font-weight:700;background:var(--soft)}
+tr.abs td{color:var(--muted)}
+td.mv{white-space:nowrap}
+input.pname{width:100%;min-width:14rem;font-size:1rem;padding:9px 10px}
+.grid2.teamgrid{grid-template-columns:repeat(auto-fit,minmax(min(100%,660px),1fr))}
+.teamgrid td:first-child{width:55%}
+@media (max-width:520px){input.pname{min-width:10rem}}
+.mvb{font:600 .8rem var(--body);width:2.2em;height:2.2em;margin-left:4px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--lane);cursor:pointer}
+.mvb:disabled{opacity:.3;cursor:default}
+tr.sub-tot td{color:var(--muted);font-size:.85rem}
+td.win{color:var(--good);font-weight:800}
+.subtabs{display:flex;gap:6px;flex-wrap:wrap}
+.subtab{font:600 .88rem var(--body);padding:8px 14px;border-radius:999px;border:1px solid var(--field-line);background:var(--surface);color:var(--ink);cursor:pointer}
+.subtab[aria-selected="true"]{background:var(--lane);border-color:var(--lane);color:var(--lane-ink)}
+.pdfprev{display:flex;flex-direction:column;align-items:center;gap:14px;padding:14px;background:var(--soft);border-radius:10px;overflow:hidden}
+.pdfpage{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);border-radius:2px;height:auto}
+.sheet{gap:10px}
+.sheet-head{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;font-size:.85rem;color:var(--muted)}
+.sheet-head b{font-family:var(--display);font-size:1.7rem;text-transform:uppercase;letter-spacing:.03em;color:var(--ink);line-height:1.1}
+h2.sh{font-size:1.1rem;border-bottom:2px solid var(--ink);padding-bottom:3px;margin-top:10px}
+h2.sh small{font:500 .8rem var(--body);text-transform:none;letter-spacing:0;color:var(--muted)}
+.sheet-sub{font-weight:700;margin:2px 0 2px}
+.grid2.ros{grid-template-columns:repeat(auto-fit,minmax(min(100%,470px),1fr))}
+.ros .card{padding:10px}
+.ros .tbl th,.ros .tbl td{padding:7px 5px}
+.ros .tbl th{letter-spacing:.03em;font-size:.68rem}
+.ros .tbl th:first-child,.ros .tbl td:first-child{padding-left:8px}
+.tbl.plain{border:0;border-radius:0;background:transparent}
+.tbl.plain th{background:transparent;color:var(--ink);border-bottom:2px solid var(--ink);text-transform:none;letter-spacing:0;font-size:.78rem;font-weight:700;padding:5px 8px}
+.tbl.plain td{padding:4px 8px;font-size:.88rem}
+.tbl.plain tr:last-child td{border-bottom:1px solid var(--line)}
+.match .tbl th,.match .tbl td{padding:7px 6px}
+.match .tbl th:first-child,.match .tbl td:first-child{padding-left:10px}
+.highs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:16px}
+.hs li{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.hs li:last-child{border-bottom:0}
+.hs ol{list-style:none;margin:0;padding:0}
+.hs .score{font-family:var(--display);font-weight:800;font-size:1.35rem;color:var(--lane);font-variant-numeric:tabular-nums}
+.hs .who{min-width:0}
+.hs .who span{display:block;font-size:.78rem;color:var(--muted)}
+.medal{display:inline-block;width:1.4em;color:var(--maple);font-weight:700}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600;font-size:.9rem;z-index:20;max-width:calc(100% - 32px)}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.9rem}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+@media (max-width:520px){h1{font-size:1.7rem}th,td{padding:7px 7px}}
+@media (prefers-reduced-motion:no-preference){nav.tabs button{transition:background .15s}}
+nav.tabs a{font:600 .9rem var(--body);color:inherit;text-decoration:none;padding:10px 14px;opacity:.9;white-space:nowrap;border-radius:8px 8px 0 0}
+nav.tabs a:hover{background:color-mix(in srgb,var(--bg) 18%,transparent)}
+[id]{scroll-margin-top:12px}
+details summary{cursor:pointer}
+#ghStatus:empty{display:none}
+</style>
+</head><body>
+
+<header class="band">
+  <div class="wrap">
+    <div class="brand"><h1 class="crest" id="lgName"><span class="wl" id="wlText">Welcome to the 2026-2027</span><span class="logo"><img src="data:image/webp;base64,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" alt="Fishers Island Community Center" width="241" height="64"></span><span class="bl">Bowling League</span></h1><span class="meta" id="lgMeta">Loading league…</span></div>
+    <nav class="tabs" role="tablist" id="tabs">
+      <button role="tab" data-tab="standings" aria-selected="true">Standings</button>
+      <button role="tab" data-tab="results" aria-selected="false">Weekly Results</button>
+      <button role="tab" data-tab="scores" aria-selected="false">Enter Scores</button>
+      <button role="tab" data-tab="bowlers" aria-selected="false">Averages &amp; Handicaps</button>
+      <button role="tab" data-tab="highs" aria-selected="false">High Scores</button>
+      <button role="tab" data-tab="teams" aria-selected="false">Teams</button>
+      <button role="tab" data-tab="export" aria-selected="false">Print &amp; Export</button>
+      <button role="tab" data-tab="web" aria-selected="false">Website</button>
+      <button role="tab" data-tab="settings" aria-selected="false">Settings</button>
+    </nav>
+  </div>
+</header>
+<main><div class="wrap" id="view"><div class="empty">Loading league…</div></div></main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const DEFAULTS = {name:"Bowling League", season:"2026-2027", teamsCount:8, playersPerTeam:4, weeks:30, gamesPerWeek:3,
+  hcpBasis:220, hcpPct:90, hcpMax:0, ptsPerGame:1, ptsSeries:1, absentPenalty:10, vacantScore:150, teams:[]};
+// vacant roster spots: scratch score + handicap = handicap basis, every game
+const VAC=()=>{ const sc=Math.min(config.vacantScore??150,config.hcpBasis); return {score:sc,hcp:Math.max(0,config.hcpBasis-sc)}; };
+const isVacSlot=(p,w)=>!!p&&(!!p.vacant||(p.startWeek>1&&w<p.startWeek));
+// a vacant spot counts as vacant unless a sub bowled in it that week
+const isVac=(p,w,gm)=>{ if(!isVacSlot(p,w)) return false; const g=gm||(weeks&&weeks[w]&&weeks[w].games)||{}, e=g[p.id];
+  return !(e&&!e.abs&&e.sub&&config.subs.some(x=>x.id===e.sub)); };
+// establishing averages: once a bowler has 3 games, the average of those games sets the handicap,
+// including for the week the 3rd game is bowled. Until then the starting average (if any) is used.
+const EST_GAMES=3;
+function estAvg(pr,thisG){ const n=pr?.games||0, pins=pr?.pins||0, start=pr?.startAvg||0;
+  if(n>=EST_GAMES){ const a=Math.floor(pins/n); return {avg:a,hcp:hcpFor(a)}; }
+  const k=thisG.length; if(n+k>=EST_GAMES){ const a=Math.floor((pins+thisG.reduce((x,v)=>x+v,0))/(n+k)); return {avg:a,hcp:hcpFor(a),est:true}; }
+  const a=start||(n?Math.floor(pins/n):0); return {avg:a,hcp:a?hcpFor(a):0,pending:!start}; }
+function weekGamesFor(gm,pid,w){ const out=[]; for(const t of config.teams) for(const p of t.players){ if(isVac(p,w,gm)) continue; const e=gm[p.id]; if(!e||e.abs) continue;
+  if(((e.sub&&config.subs.some(x=>x.id===e.sub))?e.sub:p.id)!==pid) continue; for(const v of (e.g||[])) if(v!=null&&v!=="") out.push(Number(v)); } return out; }
+const slotById=id=>{ for(const t of config.teams) for(const p of t.players) if(p.id===id) return p; return null; };
+
+let db=null, canWrite=false, config=null, weeks={}, tab="standings", loaded={config:false,weeks:false};
+let entryWeek=null, draft=null, draftDirty=false, highsWeek=null, pendingConfirm=null;
+
+function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2600)}
+
+// ---------- league structure ----------
+function normalize(c){
+  c={...DEFAULTS,...c};
+  const teams=[];
+  for(let i=0;i<c.teamsCount;i++){
+    const old=(c.teams||[])[i]||{};
+    const players=[], used=new Set((old.players||[]).slice(0,c.playersPerTeam).map(x=>x&&x.id).filter(Boolean));
+    for(let j=0;j<c.playersPerTeam;j++){
+      const op=(old.players||[])[j]||{};
+      let id=op.id; if(!id){ let n=j+1; while(used.has(`t${i+1}p${n}`)) n++; id=`t${i+1}p${n}`; } used.add(id);
+      players.push({id, name:op.name||`Bowler ${i+1}-${j+1}`, startAvg:Number(op.startAvg)||0, vacant:!!op.vacant, startWeek:Number(op.startWeek)||0});
+    }
+    teams.push({id:`t${i+1}`, name:old.name||`Team ${i+1}`, players});
+  }
+  c.teams=teams;
+  c.subs=(c.subs||[]).map(s=>({id:s.id,name:s.name||"Sub",startAvg:Number(s.startAvg)||0}));
+  return c;
+}
+function roundRobin(n, weekIdx){
+  const ids=[...Array(n)].map((_,i)=>`t${i+1}`); if(n%2) ids.push(null);
+  const m=ids.length, rounds=m-1, r=weekIdx%rounds;
+  const rot=[ids[0], ...ids.slice(1).slice(r), ...ids.slice(1).slice(0,r)];
+  const out=[]; for(let i=0;i<m/2;i++){const a=rot[i], b=rot[m-1-i]; if(a&&b) out.push({a,b});}
+  return out;
+}
+const hcpFor = avg => { if(!avg) return 0; let h=Math.floor(Math.max(0,config.hcpBasis-avg)*config.hcpPct/100); if(config.hcpMax>0) h=Math.min(h,config.hcpMax); return h; };
+
+// ---------- the whole season, computed from raw scores ----------
+function compute(){
+  const G=config.gamesPerWeek, players={}, teamOf={};
+  config.teams.forEach(t=>t.players.forEach(p=>{players[p.id]={...p,team:t.name,teamId:t.id,pins:0,games:0,hg:0,hs:0}; teamOf[p.id]=t.id;}));
+  config.subs.forEach(s=>{players[s.id]={...s,team:"Sub",teamId:null,isSub:true,pins:0,games:0,hg:0,hs:0};});
+  const teams={}; config.teams.forEach(t=>teams[t.id]={id:t.id,name:t.name,won:0,lost:0,scratch:0,hdcp:0,weeks:0});
+  const weekly={}, season={sg:[],ss:[],hg:[],hs:[],tsg:[],tss:[],thg:[],ths:[]}, results={};
+  const nums=Object.keys(weeks).map(Number).sort((a,b)=>a-b);
+  const slotOf={}; config.teams.forEach(t=>t.players.forEach(p=>slotOf[p.id]=p));
+  for(const w of nums){
+    const wk=weeks[w]; if(!wk) continue;
+    const entering={};
+    for(const pid in players) entering[pid]=estAvg(players[pid],weekGamesFor(wk.games||{},pid,w));
+    const W={sg:[],ss:[],hg:[],hs:[],tsg:[],tss:[],thg:[],ths:[]}; weekly[w]=W; results[w]=[];
+    const line=(pid)=>{ const sp=slotOf[pid];
+      if(sp&&isVac(sp,w,wk.games||{})){ const V=VAC(); return {pid,bowler:pid,abs:false,vac:true,gs:Array(G).fill(V.score),avg:0,hcp:V.hcp}; }
+      const e=(wk.games||{})[pid]||{};
+      const bowler=(!e.abs&&e.sub&&players[e.sub])?e.sub:pid; const en=entering[bowler];
+      const gs=[]; for(let g=0;g<G;g++){let v=e.abs?Math.max(0,en.avg-config.absentPenalty):(e.g||[])[g]; gs.push(v===""||v==null?null:Number(v));}
+      return {pid,bowler,abs:!!e.abs,gs,avg:en.avg,hcp:en.hcp};};
+    for(const m of (wk.matchups||[])){
+      if(!teams[m.a]||!teams[m.b]) continue;
+      const side=tid=>{const ls=config.teams.find(t=>t.id===tid).players.map(p=>line(p.id));
+        const per=[...Array(G)].map((_,g)=>ls.some(l=>l.gs[g]==null)?null:ls.reduce((s,l)=>s+l.gs[g]+l.hcp,0));
+        const scr=[...Array(G)].map((_,g)=>ls.reduce((s,l)=>s+(l.gs[g]??0),0));
+        return {ls,per,scr};};
+      const A=side(m.a), B=side(m.b); let pa=0,pb=0,complete=true;
+      for(const [X,tid,oid] of [[A,m.a,m.b],[B,m.b,m.a]]){ const tag={pid:tid,name:teams[tid].name,team:`vs ${teams[oid].name}`,week:w};
+        X.per.forEach((v,g)=>{ if(v!=null){ W.thg.push({...tag,v}); W.tsg.push({...tag,v:X.scr[g]}); } });
+        if(X.per.every(v=>v!=null)){ W.ths.push({...tag,v:X.per.reduce((s,v)=>s+v,0)}); W.tss.push({...tag,v:X.scr.reduce((s,v)=>s+v,0)}); } }
+      for(let g=0;g<G;g++){ if(A.per[g]==null||B.per[g]==null){complete=false;continue;}
+        if(A.per[g]>B.per[g]) pa+=config.ptsPerGame; else if(B.per[g]>A.per[g]) pb+=config.ptsPerGame; else {pa+=config.ptsPerGame/2;pb+=config.ptsPerGame/2;} }
+      const ta=A.per.reduce((s,v)=>s+(v??0),0), tb=B.per.reduce((s,v)=>s+(v??0),0);
+      if(complete){ if(ta>tb) pa+=config.ptsSeries; else if(tb>ta) pb+=config.ptsSeries; else {pa+=config.ptsSeries/2;pb+=config.ptsSeries/2;} }
+      const any=A.per.some(v=>v!=null)||B.per.some(v=>v!=null);
+      if(any){
+        teams[m.a].won+=pa; teams[m.a].lost+=pb; teams[m.b].won+=pb; teams[m.b].lost+=pa;
+        teams[m.a].scratch+=A.scr.reduce((s,v)=>s+v,0); teams[m.b].scratch+=B.scr.reduce((s,v)=>s+v,0);
+        teams[m.a].hdcp+=ta; teams[m.b].hdcp+=tb; teams[m.a].weeks++; teams[m.b].weeks++;
+      }
+      results[w].push({a:m.a,b:m.b,pa,pb,ta,tb,complete,any});
+    }
+    // personal stats: only real (non-absent) games
+    for(const tm of config.teams) for(const slot of tm.players){
+      const l=line(slot.id); if(l.abs||l.vac) continue; const real=l.gs.filter(v=>v!=null); if(!real.length) continue;
+      const p=players[l.bowler], tag={pid:l.bowler,name:p.name,team:p.isSub?`Sub for ${tm.name}`:p.team,week:w};
+      real.forEach(v=>{W.sg.push({...tag,v}); W.hg.push({...tag,v:v+l.hcp}); p.hg=Math.max(p.hg,v);});
+      if(real.length===G){const s=real.reduce((a,b)=>a+b,0); W.ss.push({...tag,v:s}); W.hs.push({...tag,v:s+l.hcp*G}); p.hs=Math.max(p.hs,s);}
+      p.pins+=real.reduce((a,b)=>a+b,0); p.games+=real.length;
+    }
+    for(const k in W){W[k].sort((a,b)=>b.v-a.v); season[k].push(...W[k]);}
+  }
+  for(const k in season) season[k].sort((a,b)=>b.v-a.v||a.week-b.week);
+  for(const pid in players){const p=players[pid]; p.avg=p.games>=EST_GAMES?Math.floor(p.pins/p.games):(p.startAvg||(p.games?Math.floor(p.pins/p.games):0)); p.hcp=p.avg?hcpFor(p.avg):0; p.est=p.games<EST_GAMES;}
+  return {players,teams,weekly,season,results,weeksBowled:nums.filter(w=>(results[w]||[]).some(r=>r.any))};
+}
+
+// ---------- rendering ----------
+function render(){
+  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab));
+  if(!loaded.config){ $("#view").innerHTML=`<div class="empty">Loading league…</div>`; return; }
+  if(!config){ renderSetup(); return; }
+  const S=compute();
+  $("#wlText").textContent=`Welcome to the ${config.season||""}`.trim();
+  $("#lgMeta").textContent=`${config.teamsCount} teams · ${config.playersPerTeam} per team · week ${S.weeksBowled.length} of ${config.weeks} · handicap ${config.hcpPct}% of ${config.hcpBasis}`;
+  const v=$("#view");
+  const ro = canWrite?"":`<div class="banner">You're viewing this league read-only. Only the league secretary can enter scores or change settings.</div>`;
+  if(tab==="standings") v.innerHTML=ro+standings(S);
+  else if(tab==="results") v.innerHTML=resultsView(S);
+  else if(tab==="scores") renderEntry(S);
+  else if(tab==="bowlers") v.innerHTML=bowlers(S);
+  else if(tab==="highs") v.innerHTML=highs(S);
+  else if(tab==="teams") renderTeams();
+  else if(tab==="settings") renderSettings();
+  else if(tab==="export") renderExport(S);
+  else if(tab==="web") renderWeb();
+}
+
+function teamRosters(S,title="Team Rosters"){
+  const wks=S.weeksBowled, w=wks[wks.length-1]||0;
+  const rrow=p=>{ const x=S.players[p.id]; if(isVacSlot(p,w)) return `<tr><td class="l muted">Vacant</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+    return `<tr><td class="l"><b>${esc(p.name)}</b></td><td>${x.avg?(x.est?x.avg+"e":x.avg):""}</td><td>${x.avg?x.hcp:""}</td><td>${x.pins?x.pins.toLocaleString():""}</td><td>${x.games||""}</td><td>${x.hg||""}</td><td>${x.hs||""}</td></tr>`; };
+  const rtab=(title,ps)=>`<div class="card sec"><h3 style="margin:0">${esc(title)}</h3><div class="tbl" style="border:0;border-radius:0"><table><thead><tr><th class="l">Name</th><th>Avg</th><th>Hdcp</th><th>Total Pins</th><th>Games</th><th>High Game</th><th>High Series</th></tr></thead><tbody>${ps.map(rrow).join("")}</tbody></table></div></div>`;
+  const usedSubs=config.subs.filter(s=>S.players[s.id].games>0);
+  return `<section class="sec"><h2>${esc(title)}</h2><div class="grid2 ros">${config.teams.map((t,i)=>rtab(`${i+1} - ${t.name}`,t.players)).join("")}${usedSubs.length?rtab("Substitutes",usedSubs):""}</div>
+    <p class="note">${w?`Season stats through week ${w}. Avg and Hdcp are for week ${w+1}.`:"No games bowled yet. Avg and Hdcp show starting averages."} “e” = average not yet established (fewer than 3 games). High game and series are scratch.</p></section>`;
+}
+function standings(S){
+  // laid out like the printed Standings sheet
+  const wks=S.weeksBowled, w=wks[wks.length-1], G=config.gamesPerWeek;
+  const tnum=id=>config.teams.findIndex(t=>t.id===id)+1, tname=id=>config.teams.find(t=>t.id===id)?.name||"";
+  const lw={}; if(w) for(const r of (S.results[w]||[])){ lw[r.a]=[r.pa,r.pb]; lw[r.b]=[r.pb,r.pa]; }
+  const hiT=(k,id)=>{ const x=S.season[k].find(e=>e.pid===id); return x?x.v:""; };
+  const ts=Object.values(S.teams).sort((a,b)=>b.won-a.won||b.hdcp-a.hdcp);
+  const sub=`<p class="note">${w?`Week ${w} of ${config.weeks}${weeks[w]?.date?" · "+esc(weeks[w].date):""} · `:""}Handicap ${config.hcpPct}% of ${config.hcpBasis}${config.hcpMax>0?", max "+config.hcpMax:""}</p>`;
+  const stand=`<section class="sec"><h2>Team Standings</h2>${sub}<div class="tbl"><table><thead><tr><th>Place</th><th class="l">Team Name</th><th>Pts Won</th><th>Pts Lost</th><th>% Won</th><th>Last Wk</th><th>Scratch Pins</th><th>Hdcp Pins</th><th>Pins+Hdcp</th><th>Hi Hdcp Gm</th><th>Hi Hdcp Sr</th></tr></thead><tbody>
+    ${ts.map((t,i)=>`<tr><td class="rank">${i+1}</td><td class="l"><b>${esc(t.name)}</b></td><td class="num-strong">${fmt(t.won)}</td><td>${fmt(t.lost)}</td><td>${t.won+t.lost?((t.won/(t.won+t.lost))*100).toFixed(1):""}</td>
+      <td>${lw[t.id]?fmt(lw[t.id][0])+"-"+fmt(lw[t.id][1]):""}</td><td>${t.scratch.toLocaleString()}</td><td>${(t.hdcp-t.scratch).toLocaleString()}</td><td>${t.hdcp.toLocaleString()}</td><td>${hiT("thg",t.id)}</td><td>${hiT("ths",t.id)}</td></tr>`).join("")}
+    </tbody></table></div>
+    <p class="note">Each match is worth ${fmt(config.ptsPerGame)} point${config.ptsPerGame==1?"":"s"} per game plus ${fmt(config.ptsSeries)} for the higher series, all with handicap. Ties split the points.</p></section>`;
+  if(!w) return `${stand}<div class="card empty">No scores yet. Open <b>Enter Scores</b> to record week 1.</div>`;
+  const md=weekDetail(w);
+  const gh=[...Array(G)].map((_,g)=>`<th>-${g+1}-</th>`).join("");
+  const mside=(X,pts,tot)=>`<td class="l"><b>${tnum(X.t.id)}-${esc(X.t.name)}</b></td>${X.tot.map(v=>`<td>${v??""}</td>`).join("")}<td>${tot}</td><td class="num-strong">${fmt(pts)}</td>`;
+  const mtab=`<div class="tbl"><table><thead><tr><th class="l">Team</th>${gh}<th>Total</th><th>Won</th><th></th><th class="l">Team</th>${gh}<th>Total</th><th>Won</th></tr></thead><tbody>
+    ${md.map(m=>`<tr>${mside(m.A,m.pa,m.done?m.sa:"")}<td class="vs" style="text-align:center">vs</td>${mside(m.B,m.pb,m.done?m.sb:"")}</tr>`).join("")}</tbody></table></div>`;
+  const nm=w<config.weeks?((weeks[w+1]?.matchups)||roundRobin(config.teamsCount,w)).filter(x=>x.a&&x.b):[];
+  const review=`<section class="sec"><h2>Review of Week ${w}</h2><p class="note">Team totals with handicap for each game.</p>${mtab}
+    ${nm.length?`<p class="note">Week ${w+1}: ${nm.map(x=>`${tnum(x.a)}-${esc(tname(x.a))} vs ${tnum(x.b)}-${esc(tname(x.b))}`).join(" · ")}</p>`:""}</section>`;
+  const rosters=teamRosters(S);
+  const cats=[["Scratch Game","sg"],["Scratch Series","ss"],["Hdcp Game","hg"],["Hdcp Series","hs"],["Team Scratch Game","tsg"],["Team Scratch Series","tss"],["Team Hdcp Game","thg"],["Team Hdcp Series","ths"]];
+  const cell=x=>x?`${esc(x.name)} <b>${x.v}</b>`:"";
+  const highs=`<section class="sec"><h2>High Scores</h2><div class="tbl"><table><thead><tr><th class="l"></th><th class="l">1st</th><th class="l">2nd</th><th class="l">3rd</th></tr></thead><tbody>
+    ${cats.map(([l,k])=>{ const t=top3(S.season[k]); return `<tr><td class="l"><b>${l}</b></td>${[0,1,2].map(i=>`<td class="l">${cell(t[i])}</td>`).join("")}</tr>`; }).join("")}</tbody></table></div>
+    <p class="note">Season to date through week ${w}.</p></section>`;
+  return `${stand}${review}${rosters}${highs}`;
+}
+const fmt=n=>Number.isInteger(n)?String(n):n.toFixed(1);
+
+function bowlers(S){
+  const ps=Object.values(S.players).filter(p=>!p.vacant).sort((a,b)=>b.avg-a.avg||a.name.localeCompare(b.name));
+  return `<section class="sec"><h2>Averages &amp; Handicaps</h2>
+  <p class="note">Handicap = ${config.hcpPct}% of (${config.hcpBasis} − average), rounded down${config.hcpMax>0?`, capped at ${config.hcpMax}`:""}. The handicap shown applies to the next week bowled. Bowlers establish an average after 3 games; until then the starting average shows, marked “est”. Absent (blind) games count for the team but not for the bowler's average. Vacant spots are not listed.</p>
+  <div class="tbl"><table><thead><tr><th>Bowler</th><th class="l">Team</th><th>Games</th><th>Pins</th><th>Average</th><th>Handicap</th><th>High Game</th><th>High Series</th></tr></thead><tbody>
+  ${ps.map(p=>`<tr><td class="l"><b>${esc(p.name)}</b></td><td class="l muted">${esc(p.team)}</td><td>${p.games}</td><td>${p.pins.toLocaleString()}</td>
+  <td class="num-strong">${p.avg||"—"}${p.est&&p.avg?' <span class="pill">est</span>':""}</td><td class="num-strong">${p.avg?p.hcp:"—"}</td><td>${p.hg||"—"}</td><td>${p.hs||"—"}</td></tr>`).join("")}
+  </tbody></table></div></section>`;
+}
+
+function topList(title,arr,showWeek){
+  const items=top3(arr);
+  return `<div class="card hs"><h3>${title}</h3>${items.length?`<ol>${items.map((x,i)=>`<li><div class="who"><span class="medal">${i+1}.</span><b>${esc(x.name)}</b><span>${esc(x.team)}${showWeek?` · week ${x.week}`:""}</span></div><div class="score">${x.v}</div></li>`).join("")}</ol>`:`<p class="muted small">No scores yet.</p>`}</div>`;
+}
+function highs(S){
+  const wks=S.weeksBowled; if(highsWeek==null||!wks.includes(highsWeek)) highsWeek=wks[wks.length-1]??null;
+  const W=highsWeek?S.weekly[highsWeek]:{sg:[],ss:[],hg:[],hs:[],tsg:[],tss:[],thg:[],ths:[]};
+  const teamCards=(X,sw)=>`${topList("Team High Game · Scratch",X.tsg,sw)}${topList("Team High Series · Scratch",X.tss,sw)}${topList("Team High Game · Handicap",X.thg,sw)}${topList("Team High Series · Handicap",X.ths,sw)}`;
+  return `<section class="sec"><h2>Season Highs</h2><div class="highs">
+   ${topList("High Game · Scratch",S.season.sg,1)}${topList("High Series · Scratch",S.season.ss,1)}
+   ${topList("High Game · Handicap",S.season.hg,1)}${topList("High Series · Handicap",S.season.hs,1)}</div>
+   <h3>Team</h3><div class="highs">${teamCards(S.season,1)}</div></section>
+   <section class="sec"><div class="row"><h2>Weekly Highs</h2>
+   <select id="hw" aria-label="Week">${wks.length?wks.map(w=>`<option value="${w}" ${w===highsWeek?"selected":""}>Week ${w}${weeks[w]?.date?" · "+esc(weeks[w].date):""}</option>`).join(""):"<option>No weeks bowled</option>"}</select></div>
+   <div class="highs">${topList("High Game · Scratch",W.sg)}${topList("High Series · Scratch",W.ss)}${topList("High Game · Handicap",W.hg)}${topList("High Series · Handicap",W.hs)}</div>
+   <h3>Team</h3><div class="highs">${teamCards(W)}</div>
+   <p class="note">Each bowler or team appears only once per list, with their best score. Individual series counts only bowlers who bowled all ${config.gamesPerWeek} games, and blind scores are left out. Team highs use the team's full lineup for that game, including subs and blind scores.</p></section>`;
+}
+
+// ---------- score entry ----------
+function freshDraft(w){
+  const ex=weeks[w];
+  return ex?JSON.parse(JSON.stringify({date:ex.date||"",matchups:ex.matchups||roundRobin(config.teamsCount,w-1),games:ex.games||{}}))
+           :{date:"",matchups:roundRobin(config.teamsCount,w-1),games:{}};
+}
+function renderEntry(S){
+  if(entryWeek==null){ const last=S.weeksBowled[S.weeksBowled.length-1]||0; entryWeek=Math.min(config.weeks,last+1)||1; }
+  if(!draft||draft._w!==entryWeek){ draft=freshDraft(entryWeek); draft._w=entryWeek; draftDirty=false; }
+  const G=config.gamesPerWeek, dis=canWrite?"":"disabled";
+  const S2=entering(entryWeek,draft.games);
+  const teamOpts=sel=>config.teams.map(t=>`<option value="${t.id}" ${t.id===sel?"selected":""}>${esc(t.name)}</option>`).join("");
+  const side=(tid,mi,k)=>{const t=config.teams.find(x=>x.id===tid); if(!t) return "";
+    return `<div class="tbl"><table><thead><tr><th class="l">${esc(t.name)}</th><th>Avg</th><th>Hdcp</th>${[...Array(G)].map((_,g)=>`<th>G${g+1}</th>`).join("")}<th>Series</th><th>Abs</th></tr></thead><tbody>
+    ${t.players.map(p=>{ if(isVac(p,entryWeek,draft.games)){ const V=VAC(); return `<tr class="abs"><td class="l">${config.subs.length&&canWrite?`<select data-sub="${p.id}" aria-label="Sub for the vacant spot" style="max-width:11em"><option value="" selected>Vacant</option>${config.subs.map(s=>`<option value="${s.id}">Sub: ${esc(s.name)}</option>`).join("")}</select>`:"<b>Vacant</b>"}${p.vacant?"":` <span class="pill">${esc(p.name)} starts wk ${p.startWeek}</span>`}</td><td>—</td><td>${V.hcp}</td>${[...Array(G)].map(()=>`<td>${V.score}</td>`).join("")}<td class="num-strong" id="ser_${p.id}"></td><td></td></tr>`; }
+      const e=draft.games[p.id]||{}; const bw=(!e.abs&&e.sub&&S2[e.sub])?e.sub:p.id; const en=S2[bw];
+      return `<tr data-p="${p.id}" class="${e.abs?"abs":""}"><td class="l">${nameCell(p,e,dis)}</td><td id="av_${p.id}">${en.avg||"—"}</td><td id="hc_${p.id}">${en.avg?en.hcp:"—"}</td>
+      ${[...Array(G)].map((_,g)=>`<td><input class="g" id="g_${p.id}_${g}" inputmode="numeric" maxlength="3" data-p="${p.id}" data-g="${g}" value="${e.abs?"":esc((e.g||[])[g]??"")}" ${e.abs?"disabled":""} ${dis} aria-label="${esc(p.name)} game ${g+1}"></td>`).join("")}
+      <td class="num-strong" id="ser_${p.id}"></td><td><input type="checkbox" id="abs_${p.id}" data-abs="${p.id}" ${e.abs?"checked":""} ${dis} aria-label="${esc(p.name)} absent"></td></tr>`;}).join("")}
+    <tr class="tot"><td class="l">Scratch + Hdcp</td><td></td><td></td>${[...Array(G)].map((_,g)=>`<td id="tt_${mi}_${k}_${g}"></td>`).join("")}<td id="tt_${mi}_${k}_s"></td><td></td></tr>
+    </tbody></table></div>`;};
+  const v=$("#view");
+  v.innerHTML=`${canWrite?"":`<div class="banner">Read-only: you can view weekly sheets but not change them.</div>`}
+  <section class="sec"><div class="row" style="justify-content:space-between">
+   <div class="row"><h2>Week</h2><select id="ew" aria-label="Week">${[...Array(config.weeks)].map((_,i)=>`<option value="${i+1}" ${i+1===entryWeek?"selected":""}>Week ${i+1}${weeks[i+1]?" ✓":""}</option>`).join("")}</select>
+   <label class="f" style="flex-direction:row;align-items:center;gap:8px">Date <input type="date" id="edate" value="${esc(draft.date)}" ${dis}></label></div>
+   <div class="row" id="saveRow"><button class="btn" id="saveWeek" ${dis}>Save week ${entryWeek}</button>${weeks[entryWeek]?`<button class="btn danger" id="clearWeek" ${dis}>Clear week</button>`:""}</div></div>
+   <p class="note">Handicaps shown are based on averages entering this week. Tick <b>Abs</b> for an absent bowler: the team gets a blind score of average − ${config.absentPenalty} each game. Vacant spots score ${VAC().score} + ${VAC().hcp} handicap = ${config.hcpBasis} each game. A bowler without 3 games yet gets an average and handicap as soon as their 3rd game is entered, and it counts for that week. Match points update as you type.</p>
+  </section>
+  ${draft.matchups.map((m,mi)=>`<section class="card match"><div class="match-head">
+    <div class="row"><select data-m="${mi}" data-side="a" ${dis} aria-label="Home team">${teamOpts(m.a)}</select><span class="vs">VS</span><select data-m="${mi}" data-side="b" ${dis} aria-label="Away team">${teamOpts(m.b)}</select></div>
+    <label class="row small" style="gap:6px">Lanes<input data-ml="${mi}" ${dis} style="width:6em" value="${esc(m.lanes||"")}" placeholder="${esc(lanesFor(config,entryWeek,mi,null)||"—")}" aria-label="Lanes for this match"></label>
+    <div id="pts_${mi}" class="row small"></div></div>
+    <div class="grid2">${side(m.a,mi,"a")}${side(m.b,mi,"b")}</div></section>`).join("")}`;
+  updateTotals();
+}
+function nameCell(p,e,dis){
+  if(!config.subs.length) return esc(p.name);
+  return `<select id="sub_${p.id}" data-sub="${p.id}" ${dis} ${e.abs?"disabled":""} aria-label="Who bowled for ${esc(p.name)}" style="max-width:11em">
+    <option value="">${esc(p.name)}</option>${config.subs.map(s=>`<option value="${s.id}" ${e.sub===s.id?"selected":""}>Sub: ${esc(s.name)}</option>`).join("")}</select>`;
+}
+function entering(w,gm){
+  // average/handicap for week w: games from earlier weeks, plus this week's games for a bowler still establishing (fewer than 3 games)
+  const keep=weeks, before={}; for(const k in keep) if(Number(k)<w) before[k]=keep[k];
+  weeks=before; const S=compute(); weeks=keep;
+  const g=gm||(weeks[w]&&weeks[w].games)||{}; const out={}; for(const pid in S.players) out[pid]=estAvg(S.players[pid],weekGamesFor(g,pid,w)); return out;
+}
+function updateTotals(){
+  const G=config.gamesPerWeek, en=entering(entryWeek,draft.games);
+  const V=VAC(), vac=pid=>isVac(slotById(pid),entryWeek,draft.games);
+  const bw=pid=>{const e=draft.games[pid]||{}; return (!e.abs&&e.sub&&en[e.sub])?e.sub:pid;};
+  const val=(pid,g)=>{const e=draft.games[pid]||{}; if(vac(pid)) return V.score; if(e.abs) return Math.max(0,en[pid].avg-config.absentPenalty); const x=(e.g||[])[g]; return x===""||x==null?null:Number(x);};
+  config.teams.forEach(t=>t.players.forEach(p=>{ if(vac(p.id)) return; const x=en[bw(p.id)]||{avg:0,hcp:0}, av=document.getElementById("av_"+p.id), hc=document.getElementById("hc_"+p.id);
+    if(av){ av.textContent=x.avg||"—"; av.title=x.est?"Established this week from the first 3 games":x.pending?"Average set after 3 games":""; av.style.fontWeight=x.est?"700":""; }
+    if(hc) hc.textContent=x.avg?x.hcp:"—"; }));
+  config.teams.forEach(t=>t.players.forEach(p=>{const c=document.getElementById("ser_"+p.id); if(!c) return;
+    const gs=[...Array(G)].map((_,g)=>val(p.id,g)); c.textContent=gs.some(v=>v!=null)?gs.reduce((s,v)=>s+(v??0),0):"";}));
+  draft.matchups.forEach((m,mi)=>{
+    const tot={}; for(const k of ["a","b"]){const t=config.teams.find(x=>x.id===m[k]); if(!t) continue;
+      tot[k]=[...Array(G)].map((_,g)=>t.players.some(p=>val(p.id,g)==null)?null:t.players.reduce((s,p)=>s+val(p.id,g)+(vac(p.id)?V.hcp:en[bw(p.id)].hcp),0));
+      tot[k].forEach((v,g)=>{const c=document.getElementById(`tt_${mi}_${k}_${g}`); if(c) c.textContent=v??"";});
+      const c=document.getElementById(`tt_${mi}_${k}_s`); if(c) c.textContent=tot[k].every(v=>v!=null)?tot[k].reduce((s,v)=>s+v,0):"";}
+    let pa=0,pb=0,done=true; for(let g=0;g<G;g++){const A=tot.a?.[g],B=tot.b?.[g]; if(A==null||B==null){done=false;continue;}
+      if(A>B)pa+=config.ptsPerGame; else if(B>A)pb+=config.ptsPerGame; else{pa+=config.ptsPerGame/2;pb+=config.ptsPerGame/2;}}
+    if(done){const A=tot.a.reduce((s,v)=>s+v,0),B=tot.b.reduce((s,v)=>s+v,0); if(A>B)pa+=config.ptsSeries; else if(B>A)pb+=config.ptsSeries; else{pa+=config.ptsSeries/2;pb+=config.ptsSeries/2;}}
+    const el=document.getElementById("pts_"+mi); if(el){const na=esc(config.teams.find(x=>x.id===m.a)?.name), nb=esc(config.teams.find(x=>x.id===m.b)?.name);
+      el.innerHTML=`<span class="pill ${pa>pb?"win":pa<pb?"loss":""}">${na} ${fmt(pa)}</span><span class="pill ${pb>pa?"win":pb<pa?"loss":""}">${nb} ${fmt(pb)}</span>${done?"":'<span class="muted">series point pending</span>'}`;}
+  });
+}
+
+// ---------- teams ----------
+let teamsEdit=false;
+function renderTeams(){
+  const dis=canWrite?"":"disabled";
+  if(!teamsEdit){ $("#view").innerHTML=`<div class="row" style="justify-content:space-between"><h2>Teams &amp; Bowlers</h2>${canWrite?'<button class="btn" id="editTeams">Edit teams &amp; bowlers</button>':""}</div>${teamRosters(compute(),"Team Rosters")}`; return; }
+  $("#view").innerHTML=`<section class="sec"><div class="row" style="justify-content:space-between"><h2>Edit Teams &amp; Bowlers</h2><span class="row"><button class="btn ghost" id="doneTeams">Back to rosters</button><button class="btn" id="saveTeams" ${dis}>Save teams</button></span></div>
+  <p class="note">Rename teams and bowlers and set each bowler's starting average (last season's or establishing average). Every bowler establishes an average after 3 games, and that average sets their handicap for the week it is established. The starting average is used only until then, for example for a blind score if they miss their first week. Use the arrows to set each team's bowling order. It sets the order on the score sheet, weekly results and recap, and past scores stay with each bowler. Tick <b>Vacant</b> for an empty spot. When someone fills it, untick Vacant, enter their name and starting average, and set <b>Starts Wk</b> to their first week: earlier weeks keep the vacant scores.</p>
+  <div class="grid2 teamgrid">${config.teams.map((t,i)=>`<div class="card sec"><label class="f">Team ${i+1}<input id="tn_${t.id}" value="${esc(t.name)}" ${dis}></label>
+    <div class="tbl" style="border:0"><table><thead><tr><th>Bowler</th><th>Starting Avg</th><th>Vacant</th><th>Starts Wk</th><th>Order</th></tr></thead><tbody>
+    ${t.players.map((p,j)=>`<tr><td class="l"><input id="pn_${p.id}" class="pname" value="${esc(p.name)}" ${dis} aria-label="Bowler name"></td><td><input id="pa_${p.id}" class="g" style="width:4.5em" inputmode="numeric" value="${p.startAvg||""}" ${dis} aria-label="Starting average"></td>
+    <td style="text-align:center"><input type="checkbox" id="pv_${p.id}" ${p.vacant?"checked":""} ${dis} aria-label="Spot is vacant"></td>
+    <td><input id="ps_${p.id}" class="g" style="width:3.6em" inputmode="numeric" value="${p.startWeek>1?p.startWeek:""}" placeholder="1" ${dis||(p.vacant?"disabled":"")} aria-label="First week this bowler bowls"></td>
+    <td class="mv"><button class="mvb" data-mv="${t.id}|${j}|-1" ${dis||(j===0?"disabled":"")} aria-label="Move ${esc(p.name)} up">▲</button><button class="mvb" data-mv="${t.id}|${j}|1" ${dis||(j===t.players.length-1?"disabled":"")} aria-label="Move ${esc(p.name)} down">▼</button></td></tr>`).join("")}
+    </tbody></table></div></div>`).join("")}</div>
+  ${subsCard(dis)}</section>`;
+}
+function subsCard(dis){
+  const S=compute();
+  return `<div class="card sec"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Substitutes</h3><button class="btn ghost" id="addSub" ${dis}>Add sub</button></div>
+  <p class="note">Subs can bowl for any team. In Enter Scores, choose the sub from the absent bowler's name. The team uses the sub's score and handicap, and the games count toward the sub's own average and highs. Save teams after renaming subs.</p>
+  ${config.subs.length?`<div class="tbl" style="border:0"><table><thead><tr><th>Sub</th><th>Starting Avg</th><th>Games</th><th>Average</th><th></th></tr></thead><tbody>
+  ${config.subs.map(s=>{const p=S.players[s.id]; return `<tr><td class="l"><input id="sn_${s.id}" value="${esc(s.name)}" style="width:100%;min-width:8em" ${dis} aria-label="Sub name"></td>
+   <td><input id="sa_${s.id}" class="g" style="width:4.5em" inputmode="numeric" value="${s.startAvg||""}" ${dis} aria-label="Starting average"></td>
+   <td>${p.games}</td><td>${p.avg||"—"}</td><td>${p.games?'<span class="muted small">has bowled</span>':`<button class="btn danger" data-rm="${s.id}" ${dis} style="padding:5px 10px">Remove</button>`}</td></tr>`;}).join("")}
+  </tbody></table></div>`:`<p class="muted small">No subs yet. Add one to let them bowl for any team.</p>`}</div>`;
+}
+function collectTeams(){
+  const c=JSON.parse(JSON.stringify(config));
+  c.teams.forEach(tm=>{const n=$("#tn_"+tm.id); if(n) tm.name=n.value.trim()||tm.name;
+    tm.players.forEach(p=>{const a=$("#pn_"+p.id), b=$("#pa_"+p.id), v=$("#pv_"+p.id), sw=$("#ps_"+p.id); if(a) p.name=a.value.trim()||p.name; if(b) p.startAvg=clamp(parseInt(b.value)||0,0,300);
+      if(v) p.vacant=v.checked; if(sw) p.startWeek=p.vacant?0:clamp(parseInt(sw.value)||0,0,config.weeks);});});
+  c.subs.forEach(s=>{const a=$("#sn_"+s.id), b=$("#sa_"+s.id); if(a) s.name=a.value.trim()||s.name; if(b) s.startAvg=clamp(parseInt(b.value)||0,0,300);});
+  return c;
+}
+
+// ---------- settings ----------
+// lanes for the match in position mi of week w: a lane set for that week, otherwise the league's usual lanes (rotated weekly if chosen)
+function lanesFor(c,w,mi,m){ if(m&&m.lanes) return m.lanes; const L=(c&&c.matchLanes||[]).filter(Boolean); if(!L.length) return "";
+  const n=Math.floor((c.teamsCount||2)/2), list=(c.matchLanes||[]).slice(0,n); if(!list.some(Boolean)) return "";
+  const i=c.rotateLanes?((mi+(w-1))%n):mi; return list[i]||""; }
+function settingsForm(c, isSetup){
+  const n=(id,label,val,min,max,step=1)=>`<label class="f">${label}<input id="${id}" type="number" min="${min}" max="${max}" step="${step}" value="${val}" ${canWrite?"":"disabled"}></label>`;
+  return `<div class="card sec"><h3>League</h3><div class="formgrid">
+    <label class="f" style="grid-column:1/-1">League name<input id="s_name" value="${esc(c.name)}" ${canWrite?"":"disabled"}></label>
+    <label class="f" style="grid-column:1/-1">Season (shown as “Welcome to the …”)<input id="s_season" value="${esc(c.season??"2026-2027")}" placeholder="2026-2027" ${canWrite?"":"disabled"}></label>
+    ${n("s_teams","Number of teams",c.teamsCount,2,40)}${n("s_ppt","Players per team",c.playersPerTeam,1,10)}
+    ${n("s_weeks","Weeks in season",c.weeks,1,60)}${n("s_gpw","Games per week",c.gamesPerWeek,1,5)}</div></div>
+   <div class="card sec"><h3>Handicap</h3><div class="hcpbox">
+    ${n("s_pct","Handicap %",c.hcpPct,0,100)}${n("s_basis","Basis score",c.hcpBasis,100,300)}${n("s_max","Max handicap (0 = none)",c.hcpMax,0,300)}
+    <div class="formula" id="s_formula"></div></div>
+    <p class="note">Changing the percentage or basis recalculates every handicap, match result and standing for the whole season from the raw scores.</p></div>
+   <div class="card sec"><h3>Points</h3><div class="formgrid">
+    ${n("s_ppg","Points per game won",c.ptsPerGame,0,10,0.5)}${n("s_pser","Points for series",c.ptsSeries,0,10,0.5)}${n("s_abs","Absent: avg minus",c.absentPenalty,0,100)}${n("s_vac","Vacant score (scratch)",c.vacantScore??150,0,300)}</div>
+    <p class="note">A vacant spot bowls the vacant score plus a handicap that brings it up to the ${c.hcpBasis} basis every game. Vacant scores count for the team but never for averages or high scores.</p></div>
+   <div class="card sec"><h3>Lanes</h3><div class="formgrid">
+    ${[...Array(Math.max(1,Math.floor((c.teamsCount||2)/2)))].map((_,i)=>`<label class="f">Match ${i+1} lanes<input id="s_lane${i}" value="${esc((c.matchLanes||[])[i]||"")}" placeholder="e.g. ${i*2+1}-${i*2+2}" ${canWrite?"":"disabled"}></label>`).join("")}
+    <label class="f" style="grid-column:1/-1;flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="s_rotate" ${c.rotateLanes?"checked":""} ${canWrite?"":"disabled"}> Rotate lanes each week</label></div>
+    <p class="note">Match 1 is the first match listed for each week in Enter Scores. With rotation on, the matches move to the next set of lanes each week. Lanes can also be changed for a single week in Enter Scores, and the score sheet fills them in on league night.</p></div>
+   <div class="row"><button class="btn" id="saveSettings" ${canWrite?"":"disabled"}>${isSetup?"Create league":"Save settings"}</button></div>`;
+}
+function renderSettings(){ $("#view").innerHTML=`<section class="sec"><h2>Settings</h2>${settingsForm(config,false)}</section>`; formula(); }
+function renderSetup(){
+  $("#lgMeta").textContent="New league";
+  $("#view").innerHTML=canWrite?`<section class="sec"><h2>Set up your league</h2><p class="note">Pick the basics. You can rename teams and bowlers next, and change any of this later in Settings.</p>${settingsForm(DEFAULTS,true)}</section>
+    <section class="sec"><h2>Or bring in an existing league</h2><div class="card sec"><p class="note">Restore a backup file downloaded from the Claude version (Print &amp; Export, Download backup) or from this app.</p>
+    <div class="row" id="restoreRow"><label class="btn ghost" style="display:inline-flex;align-items:center">Restore from backup file<input type="file" id="restoreFile" accept=".json,application/json" style="position:absolute;opacity:0;width:1px;height:1px"></label>${ghReady()?'<button class="btn ghost" id="ghRestore">Restore from website backup</button>':""}</div></div></section>`
+    :`<div class="card empty">This league hasn't been set up yet. The league secretary will add teams and scores soon.</div>`;
+  formula();
+}
+function formula(){const f=$("#s_formula"); if(!f) return; const p=+$("#s_pct").value||0,b=+$("#s_basis").value||0;
+  const ex=180, h=Math.floor(Math.max(0,b-ex)*p/100); f.textContent=`${p}% × (${b} − avg) · a ${ex} bowler gets ${h}`;}
+function readSettings(){
+  const g=id=>Number($("#"+id).value);
+  const c={...(config||DEFAULTS), name:$("#s_name").value.trim()||"Bowling League", season:$("#s_season").value.trim(), teamsCount:clamp(g("s_teams"),2,40), playersPerTeam:clamp(g("s_ppt"),1,10),
+    weeks:clamp(g("s_weeks"),1,60), gamesPerWeek:clamp(g("s_gpw"),1,5), hcpPct:clamp(g("s_pct"),0,100), hcpBasis:clamp(g("s_basis"),100,300),
+    hcpMax:clamp(g("s_max"),0,300), ptsPerGame:clamp(g("s_ppg"),0,10), ptsSeries:clamp(g("s_pser"),0,10), absentPenalty:clamp(g("s_abs"),0,100), vacantScore:clamp(g("s_vac"),0,300)};
+  c.matchLanes=[...document.querySelectorAll('[id^="s_lane"]')].map(i=>i.value.trim().slice(0,20)); c.rotateLanes=!!($("#s_rotate")&&$("#s_rotate").checked);
+  return normalize(c);
+}
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,Number.isFinite(v)?v:a));
+
+// ---------- weekly results ----------
+let resultsWeek=null;
+const teamById=id=>config.teams.find(t=>t.id===id);
+function weekDetail(w){
+  const wk=weeks[w]; if(!wk) return [];
+  const G=config.gamesPerWeek, en=entering(w);
+  const side=tid=>{ const t=teamById(tid);
+    const rows=t.players.map(p=>{ if(isVac(p,w)){ const V=VAC(); return {name:"Vacant",roster:p.name,vac:true,sub:false,abs:false,hcp:V.hcp,gs:Array(G).fill(V.score)}; }
+      const e=(wk.games||{})[p.id]||{}; const sub=!e.abs&&e.sub?config.subs.find(s=>s.id===e.sub):null; const by=sub||p; const x=en[by.id]||{avg:0,hcp:0};
+      const gs=[...Array(G)].map((_,g)=>{ if(e.abs) return Math.max(0,x.avg-config.absentPenalty); const v=(e.g||[])[g]; return v==null||v===""?null:Number(v); });
+      return {name:by.name,roster:p.name,sub:!!sub,abs:!!e.abs,hcp:x.hcp,gs}; });
+    const scr=[...Array(G)].map((_,g)=>rows.some(r=>r.gs[g]==null)?null:rows.reduce((s,r)=>s+r.gs[g],0));
+    const hc=rows.reduce((s,r)=>s+r.hcp,0);
+    return {t,rows,scr,hc,tot:scr.map(v=>v==null?null:v+hc)}; };
+  return (wk.matchups||[]).filter(m=>teamById(m.a)&&teamById(m.b)).map(m=>{
+    const A=side(m.a), B=side(m.b); let pa=0,pb=0,done=true;
+    for(let g=0;g<G;g++){ const a=A.tot[g],b=B.tot[g]; if(a==null||b==null){done=false;continue;}
+      if(a>b) pa+=config.ptsPerGame; else if(b>a) pb+=config.ptsPerGame; else {pa+=config.ptsPerGame/2;pb+=config.ptsPerGame/2;} }
+    const sa=A.tot.reduce((s,v)=>s+(v??0),0), sb=B.tot.reduce((s,v)=>s+(v??0),0);
+    if(done){ if(sa>sb) pa+=config.ptsSeries; else if(sb>sa) pb+=config.ptsSeries; else {pa+=config.ptsSeries/2;pb+=config.ptsSeries/2;} }
+    return {A,B,pa,pb,sa,sb,done}; });
+}
+function resultTable(X,Y,G,done,sx,sy){
+  const sum=a=>a.every(v=>v!=null)?a.reduce((s,v)=>s+v,0):"";
+  const cls=(a,b)=>a!=null&&b!=null&&a>b?' class="win"':"";
+  const ser=r=>r.gs.some(v=>v!=null)?r.gs.reduce((s,v)=>s+(v??0),0):"", serH=r=>{ const n=r.gs.filter(v=>v!=null).length; return n?ser(r)+r.hcp*n:""; };
+  return `<div class="tbl"><table><thead><tr><th class="l">${esc(X.t.name)}</th><th>Hdcp</th>${[...Array(G)].map((_,g)=>`<th>G${g+1}</th>`).join("")}<th>Series</th><th>Ser+Hdcp</th></tr></thead><tbody>
+  ${X.rows.map(r=>`<tr class="${r.abs||r.vac?"abs":""}"><td class="l">${r.abs?`${esc(r.roster)} <span class="pill">absent · blind</span>`:r.sub?`${esc(r.name)} <span class="pill">sub for ${esc(r.roster)}</span>`:esc(r.name)}</td><td>${r.hcp}</td>
+    ${r.gs.map(v=>`<td>${v??""}</td>`).join("")}<td class="num-strong">${ser(r)}</td><td class="num-strong">${serH(r)}</td></tr>`).join("")}
+  <tr class="sub-tot"><td class="l">Scratch</td><td></td>${X.scr.map(v=>`<td>${v??""}</td>`).join("")}<td>${sum(X.scr)}</td><td></td></tr>
+  <tr class="sub-tot"><td class="l">Handicap</td><td></td>${X.scr.map(()=>`<td>${X.hc}</td>`).join("")}<td>${X.hc*G}</td><td></td></tr>
+  <tr class="tot"><td class="l">Total</td><td></td>${X.tot.map((v,g)=>`<td${cls(v,Y.tot[g])}>${v??""}</td>`).join("")}<td${done?cls(sx,sy):""}>${done?sx:""}</td><td></td></tr>
+  </tbody></table></div>`;
+}
+function weekResultsHtml(w){
+  const G=config.gamesPerWeek, ms=weekDetail(w);
+  if(!ms.length) return `<div class="card empty">No matches recorded for week ${w}.</div>`;
+  return ms.map(m=>`<article class="card match"><div class="match-head">
+    <div class="row"><b>${esc(m.A.t.name)}</b><span class="pill ${m.pa>m.pb?"win":m.pa<m.pb?"loss":""}">${fmt(m.pa)}</span><span class="vs">VS</span><span class="pill ${m.pb>m.pa?"win":m.pb<m.pa?"loss":""}">${fmt(m.pb)}</span><b>${esc(m.B.t.name)}</b></div>
+    ${m.done?"":'<span class="pill">in progress</span>'}</div>
+    <div class="grid2">${resultTable(m.A,m.B,G,m.done,m.sa,m.sb)}${resultTable(m.B,m.A,G,m.done,m.sb,m.sa)}</div></article>`).join("");
+}
+function resultsView(S){
+  const wks=S.weeksBowled; if(resultsWeek==null||!wks.includes(resultsWeek)) resultsWeek=wks[wks.length-1]??null;
+  if(!resultsWeek) return `<section class="sec"><h2>Weekly Results</h2><div class="card empty">No scores yet. Open <b>Enter Scores</b> to record week 1.</div></section>`;
+  return `<section class="sec"><div class="row"><h2>Weekly Results</h2><select id="resw" aria-label="Week">${wks.map(w=>`<option value="${w}" ${w===resultsWeek?"selected":""}>Week ${w}${weeks[w]?.date?" · "+esc(weeks[w].date):""}</option>`).join("")}</select></div>
+  <p class="note">Green totals won that game. Handicaps are each bowler's handicap entering the week.</p>${weekResultsHtml(resultsWeek)}</section>`;
+}
+
+// ---------- PDF reports (built in, no outside libraries) ----------
+const PDFW={"Helvetica":[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584,761,556,0,222,556,333,1000,556,556,333,1000,667,333,1000,0,611,0,0,222,222,333,333,350,556,1000,333,1000,500,333,944,0,500,667,278,333,556,556,556,556,260,556,333,737,370,556,584,333,737,333,400,584,333,333,333,556,537,278,333,333,365,556,834,834,834,611,667,667,667,667,667,667,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,500,556,556,556,556,278,278,278,278,556,556,556,556,556,556,556,584,611,556,556,556,556,500,556,500],"Helvetica-Bold":[278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584,761,556,0,278,556,500,1000,556,556,333,1000,667,333,1000,0,611,0,0,278,278,500,500,350,556,1000,333,1000,556,333,944,0,500,667,278,333,556,556,556,556,280,556,333,737,370,556,584,333,737,333,400,584,333,333,333,611,556,278,333,333,365,556,834,834,834,611,722,722,722,722,722,722,1000,722,667,667,667,667,278,278,278,278,722,722,778,778,778,778,778,584,778,722,722,722,722,667,667,611,556,556,556,556,556,556,889,556,556,556,556,556,278,278,278,278,611,611,611,611,611,611,611,584,611,611,611,611,611,556,611,556]};
+const CP1252={0x20AC:128,0x201A:130,0x0192:131,0x201E:132,0x2026:133,0x2020:134,0x2021:135,0x2030:137,0x0160:138,0x2039:139,0x0152:140,0x017D:142,0x2018:145,0x2019:146,0x201C:147,0x201D:148,0x2022:149,0x2013:150,0x2014:151,0x2122:153,0x0161:154,0x203A:155,0x0153:156,0x017E:158,0x0178:159};
+function pdfCodes(str){ const out=[]; for(const ch of String(str??"")){ let c=ch.codePointAt(0); if(c<32) continue; if(c>255) c=CP1252[c]??(c===0x2212?45:63); else if(c>=127&&c<160) c=63; out.push(c);} return out; }
+function textW(str,size,bold){ const w=PDFW[bold?"Helvetica-Bold":"Helvetica"]; let t=0; for(const c of pdfCodes(str)) t+=w[c-32]||556; return t*size/1000; }
+function fitText(str,size,bold,maxW){ str=String(str??""); if(textW(str,size,bold)<=maxW) return str; let s=str; while(s.length>1&&textW(s+"…",size,bold)>maxW) s=s.slice(0,-1); return s+"…"; }
+const INK=[0.07,0.07,0.07], GREY=[0.4,0.4,0.4], BLUE=[0.11,0.35,0.63], GREEN=[0.1,0.48,0.3], HEAD=[0.925,0.925,0.925], TEAMBG=[0.867,0.894,0.925], RULE=[0.776,0.776,0.776];
+class PdfDoc{
+  constructor(o={}){ this.W=o.w||612; this.H=o.h||792; this.M=o.margin??36; this.footer=o.footer||""; this.pages=[]; this.newPage(); }
+  get cw(){ return this.W-2*this.M; } get ch(){ return this.H-2*this.M-14; }
+  newPage(){ this.ops=[]; this.pages.push({ops:this.ops,scale:1}); this.y=0; }
+  text(x,y,s,o={}){ this.ops.push({t:"T",x,y,s:String(s??""),size:o.size||9,bold:!!o.bold,color:o.color||INK,align:o.align||"left"}); }
+  rect(x,y,w,h,fill){ this.ops.push({t:"R",x,y,w,h,fill}); }
+  line(x1,y1,x2,y2,width=0.5,color=RULE){ this.ops.push({t:"L",x1,y1,x2,y2,width,color}); }
+  renderTo(box){
+    // draw each page onto a canvas so the report can be previewed before downloading
+    box.innerHTML=""; const cssW=Math.min(box.clientWidth||800,860), dpr=Math.min(window.devicePixelRatio||1,2), k=cssW/this.W;
+    const col=c=>`rgb(${c.map(v=>Math.round(v*255)).join(",")})`;
+    this.pages.forEach((pg,pi)=>{ const cv=document.createElement("canvas"); cv.className="pdfpage"; cv.width=Math.round(this.W*k*dpr); cv.height=Math.round(this.H*k*dpr);
+      cv.style.width=cssW+"px"; cv.style.maxWidth="100%"; cv.setAttribute("role","img"); cv.setAttribute("aria-label",`Page ${pi+1} of ${this.pages.length}`);
+      const g=cv.getContext("2d"); g.scale(k*dpr,k*dpr); this.drawPage(g,pi); box.appendChild(cv); });
+  }
+  drawPage(g,pi){ const pg=this.pages[pi], col=c=>`rgb(${c.map(v=>Math.round(v*255)).join(",")})`;
+      g.fillStyle="#fff"; g.fillRect(0,0,this.W,this.H);
+      const s=pg.scale, ox=this.M+(this.cw-this.cw*s)/2, X=x=>ox+x*s, Y=y=>this.M+y*s;
+      for(const o of pg.ops){
+        if(o.t==="R"){ g.fillStyle=col(o.fill); g.fillRect(X(o.x),Y(o.y),o.w*s,o.h*s); }
+        else if(o.t==="L"){ g.strokeStyle=col(o.color); g.lineWidth=o.width*s; g.beginPath(); g.moveTo(X(o.x1),Y(o.y1)); g.lineTo(X(o.x2),Y(o.y2)); g.stroke(); }
+        else { const sz=o.size*s, w=textW(o.s,o.size,o.bold)*s; let x=X(o.x); if(o.align==="right") x-=w; else if(o.align==="center") x-=w/2;
+          g.font=`${o.bold?"bold ":""}${sz}px Helvetica, Arial, sans-serif`; g.fillStyle=col(o.color); g.textBaseline="alphabetic"; g.fillText(o.s,x,Y(o.y)); } }
+      g.font="7.5px Helvetica, Arial, sans-serif"; g.fillStyle=col(GREY); g.fillText(`${this.footer}${this.footer?"  ·  ":""}Page ${pi+1} of ${this.pages.length}`,this.M,this.H-this.M+14);
+  }
+  images(dpi=150){ const k=dpi/72; return this.pages.map((_,pi)=>{ const cv=document.createElement("canvas"); cv.width=Math.round(this.W*k); cv.height=Math.round(this.H*k);
+    const g=cv.getContext("2d"); g.scale(k,k); this.drawPage(g,pi); return cv.toDataURL("image/png"); }); }
+  fitPage(h){ const pg=this.pages[this.pages.length-1]; if(h>this.ch) pg.scale=this.ch/h; }
+  bytes(){
+    const f=n=>(Math.round(n*100)/100).toString(), col=c=>c.map(f).join(" ");
+    const hex=s=>"<"+pdfCodes(s).map(c=>c.toString(16).padStart(2,"0")).join("")+">";
+    const streams=this.pages.map((pg,pi)=>{ const s=pg.scale, ox=this.M+(this.cw-this.cw*s)/2, top=this.H-this.M; let out="";
+      const X=x=>ox+x*s, Y=y=>top-y*s;
+      for(const o of pg.ops){
+        if(o.t==="R") out+=`${col(o.fill)} rg ${f(X(o.x))} ${f(Y(o.y+o.h))} ${f(o.w*s)} ${f(o.h*s)} re f\n`;
+        else if(o.t==="L") out+=`${f(o.width*s)} w ${col(o.color)} RG ${f(X(o.x1))} ${f(Y(o.y1))} m ${f(X(o.x2))} ${f(Y(o.y2))} l S\n`;
+        else { const sz=o.size*s, w=textW(o.s,o.size,o.bold)*s; let x=X(o.x); if(o.align==="right") x-=w; else if(o.align==="center") x-=w/2;
+          out+=`BT /${o.bold?"F2":"F1"} ${f(sz)} Tf ${col(o.color)} rg ${f(x)} ${f(Y(o.y))} Td ${hex(o.s)} Tj ET\n`; } }
+      const foot=`${this.footer}${this.footer?"  ·  ":""}Page ${pi+1} of ${this.pages.length}`;
+      out+=`BT /F1 7.5 Tf ${col(GREY)} rg ${f(this.M)} ${f(this.M-14)} Td ${hex(foot)} Tj ET\n`;
+      return out; });
+    const objs=[]; const add=s=>{ objs.push(s); return objs.length; };
+    const cat=add(""), pagesId=add(""), f1=add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"), f2=add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
+    const kids=[];
+    for(const st of streams){ const c=add(`<< /Length ${st.length} >>\nstream\n${st}endstream`);
+      kids.push(add(`<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${this.W} ${this.H}] /Resources << /Font << /F1 ${f1} 0 R /F2 ${f2} 0 R >> >> /Contents ${c} 0 R >>`)); }
+    objs[cat-1]=`<< /Type /Catalog /Pages ${pagesId} 0 R >>`;
+    objs[pagesId-1]=`<< /Type /Pages /Kids [${kids.map(k=>k+" 0 R").join(" ")}] /Count ${kids.length} >>`;
+    let pdf="%PDF-1.4\n%\xE2\xE3\xCF\xD3\n"; const offs=[];
+    objs.forEach((o,i)=>{ offs.push(pdf.length); pdf+=`${i+1} 0 obj\n${o}\nendobj\n`; });
+    const xref=pdf.length;
+    pdf+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`+offs.map(o=>String(o).padStart(10,"0")+" 00000 n \n").join("")+`trailer\n<< /Size ${objs.length+1} /Root ${cat} 0 R >>\nstartxref\n${xref}\n%%EOF`;
+    const b=new Uint8Array(pdf.length); for(let i=0;i<pdf.length;i++) b[i]=pdf.charCodeAt(i)&255; return b;
+  }
+}
+// table: cols [{label,w,align}] (w null = share the rest); rows [{cells:[v|{v,bold,color,span,r}], bold, fill}]
+function pdfTable(doc,x,y,width,cols,rows,o={}){
+  // styled like the on-screen recap: full grid lines, grey heading row, team name in the heading
+  const size=o.size||8.5, rh=size*1.62, hsz=Math.max(6.5,size-1.4), fixed=cols.reduce((s,c)=>s+(c.w||0),0), flex=cols.filter(c=>!c.w).length;
+  const ws=cols.map(c=>c.w||(width-fixed)/Math.max(1,flex)), edges=[x]; ws.forEach(w=>edges.push(edges[edges.length-1]+w));
+  const grid=(yy,h,skip)=>{ edges.forEach((ex,i)=>{ if(skip&&skip.has(i)) return; doc.line(ex,yy,ex,yy+h,0.5,RULE); }); doc.line(x,yy+h,x+width,yy+h,0.5,RULE); };
+  const head=yy=>{ doc.line(x,yy,x+width,yy,0.5,RULE);
+    if(o.title&&!o.titleInHead){ doc.rect(x,yy,width,rh,TEAMBG); doc.text(x+4,yy+rh-size*0.5,fitText(o.title,size,true,width-8),{size,bold:true}); grid(yy,rh,new Set(edges.map((_,i)=>i).slice(1,-1))); yy+=rh; }
+    if(o.noHead) return yy; const hh=rh*0.95; doc.rect(x,yy,width,hh,HEAD); let cx=x;
+    cols.forEach((c,i)=>{ const al=c.align||"left";
+      if(i===0&&o.title&&o.titleInHead){ doc.rect(cx,yy,ws[0],hh,TEAMBG); doc.text(cx+3,yy+hh-size*0.55,fitText(o.title,size,true,ws[0]-6),{size,bold:true}); cx+=ws[i]; return; }
+      const lbl=fitText(String(c.label||"").toUpperCase(),hsz,true,ws[i]-6);
+      doc.text(al==="right"?cx+ws[i]-3:al==="center"?cx+ws[i]/2:cx+3,yy+hh-hsz*0.6,lbl,{size:hsz,bold:true,color:INK,align:al}); cx+=ws[i]; });
+    grid(yy,hh); return yy+hh; };
+  y=head(y);
+  for(const r of rows){
+    if(o.paginate&&y+rh>doc.ch){ doc.newPage(); y=head(0); }
+    if(r.fill) doc.rect(x,y,width,rh,r.fill);
+    let cx=x, ci=0; const skip=new Set();
+    for(const cell of r.cells){ const c=(cell&&typeof cell==="object")?cell:{v:cell}; const span=c.span||1; const w=ws.slice(ci,ci+span).reduce((a,b)=>a+b,0);
+      for(let k=1;k<span;k++) skip.add(ci+k);
+      const al=c.align||cols[ci].align||"left", bold=c.bold??r.bold??false, color=c.color||r.color||INK, by=y+rh-size*0.52;
+      if(c.r!=null){ const rw=textW(String(c.r),size,true); doc.text(cx+w-3,by,c.r,{size,bold:true,color,align:"right"}); doc.text(cx+3,by,fitText(c.v,size,bold,w-rw-10),{size,bold,color:c.vcolor||color}); }
+      else if(c.v!=null&&c.v!==""){ const s=fitText(c.v,size,bold,w-6); doc.text(al==="right"?cx+w-3:al==="center"?cx+w/2:cx+3,by,s,{size,bold,color,align:al}); }
+      cx+=w; ci+=span; }
+    grid(y,rh,skip); y+=rh;
+  }
+  return y;
+}
+function pdfH2(doc,x,y,w,t){ doc.text(x,y+10,String(t).toUpperCase(),{size:9.5,bold:true}); doc.line(x,y+13,x+w,y+13,1.2,INK); return y+18; }
+function pdfTitle(doc,sub){ doc.text(0,18,String(config.name).toUpperCase(),{size:19,bold:true}); doc.text(0,31,sub,{size:8.5,color:GREY}); return 40; }
+const pdfFooter=()=>`${config.name} · printed ${new Date().toLocaleDateString()}`;
+const wkLabel=w=>`Week ${w}${weeks[w]?.date?" · "+weeks[w].date:""}`;
+function standingsRows(S){ return Object.values(S.teams).sort((a,b)=>b.won-a.won||b.hdcp-a.hdcp).map((t,i)=>({cells:[{v:i+1},{v:t.name,bold:true},{v:fmt(t.won),bold:true},fmt(t.lost),t.won+t.lost?((t.won/(t.won+t.lost))*100).toFixed(1)+"%":"",t.scratch.toLocaleString(),t.hdcp.toLocaleString()]})); }
+const STAND_COLS=[{label:"",w:18,align:"right"},{label:"Team"},{label:"Won",w:34,align:"right"},{label:"Lost",w:34,align:"right"},{label:"Pct",w:40,align:"right"},{label:"Scratch",w:52,align:"right"},{label:"+Hdcp",w:52,align:"right"}];
+function resultsRows(S,w){ const tn=id=>config.teams.find(t=>t.id===id)?.name||""; return (S.results[w]||[]).map(r=>({cells:[{v:tn(r.a),bold:r.pa>r.pb},{v:fmt(r.pa),bold:true},r.ta.toLocaleString(),{v:"vs",align:"center",color:GREY},{v:tn(r.b),bold:r.pb>r.pa},{v:fmt(r.pb),bold:true},r.tb.toLocaleString()]})); }
+const RES_COLS=[{label:"Team"},{label:"Pts",w:24,align:"right"},{label:"Total",w:38,align:"right"},{label:"",w:20,align:"center"},{label:"Team"},{label:"Pts",w:24,align:"right"},{label:"Total",w:38,align:"right"}];
+const HS_CATS=[["Game","sg"],["Series","ss"],["Game hdcp","hg"],["Series hdcp","hs"],["Team game","tsg"],["Team series","tss"],["Team game hdcp","thg"],["Team series hdcp","ths"]];
+function highsTable(doc,y,S,w){
+  const Wk=w?S.weekly[w]:null, cell=(x,season)=>x?{v:x.name+(season?` (w${x.week})`:""),r:x.v}:"";
+  const cols=[{label:"",w:78},...[1,2,3].map(i=>({label:Wk?(i===1?"Week "+w:""):(i===1?"Season":"")})),...(Wk?[1,2,3].map(i=>({label:i===1?"Season":""})):[])];
+  const rows=HS_CATS.map(([lbl,k])=>{ const b=top3(S.season[k]); const a=Wk?top3(Wk[k]):null;
+    return {cells:[{v:lbl,bold:true},...(a?[0,1,2].map(i=>cell(a[i])):[]),...[0,1,2].map(i=>cell(b[i],true))]}; });
+  return pdfTable(doc,0,y,doc.cw,cols,rows,{size:8});
+}
+function bowlerTables(doc,y,S,w,cols2=2,size=8){
+  const G=config.gamesPerWeek, wk=weeks[w]||{}, games=wk.games||{}, gap=12, tw=(doc.cw-gap*(cols2-1))/cols2;
+  const cols=[{label:"Bowler"},...[...Array(G)].map((_,g)=>({label:"G"+(g+1),w:24,align:"right"})),{label:"Ser",w:28,align:"right"},{label:"Avg",w:25,align:"right"},{label:"Hdcp",w:27,align:"right"}];
+  const num=v=>v==null||v===""?null:Number(v);
+  const gcells=gs=>{ const real=gs.filter(v=>v!=null); return [...gs.map(v=>v??""),{v:real.length?real.reduce((a,b)=>a+b,0):"",bold:true}]; };
+  const subFor={}; for(const t of config.teams) for(const p of t.players){ const e=games[p.id]; if(e&&!e.abs&&e.sub) subFor[e.sub]={g:e.g||[],team:t.name}; }
+  const prow=p=>{ if(isVac(p,w)){ const V=VAC(); return {cells:[{v:"Vacant",color:GREY},{v:`vacant ${V.score} + ${V.hcp} hdcp`,span:G+1,color:GREY,align:"left"},"",""]}; }
+    const x=S.players[p.id], e=games[p.id]; let mid;
+    if(!e) mid=[{v:"",span:G+1}]; else if(e.abs) mid=[{v:"absent (blind)",span:G+1,color:GREY,align:"left"}];
+    else if(e.sub){ const s=config.subs.find(q=>q.id===e.sub); mid=[{v:"sub: "+(s?.name||""),span:G+1,color:GREY,align:"left"}]; }
+    else mid=gcells([...Array(G)].map((_,g)=>num((e.g||[])[g])));
+    return {cells:[p.name,...mid,x.avg||"",x.avg?x.hcp:""]}; };
+  const blocks=config.teams.map(t=>({title:t.name,rows:t.players.map(prow)}));
+  const subs=config.subs.filter(s=>subFor[s.id]).map(s=>({cells:[{v:s.name+" (for "+subFor[s.id].team+")"},...gcells([...Array(G)].map((_,g)=>num(subFor[s.id].g[g]))),S.players[s.id].avg||"",S.players[s.id].avg?S.players[s.id].hcp:""]}));
+  if(subs.length) blocks.push({title:"Subs",rows:subs});
+  for(let i=0;i<blocks.length;i+=cols2){ let maxY=y;
+    for(let j=0;j<cols2&&i+j<blocks.length;j++){ const b=blocks[i+j]; maxY=Math.max(maxY,pdfTable(doc,j*(tw+gap),y,tw,cols,b.rows,{size,title:b.title,titleInHead:true})); }
+    y=maxY+6; }
+  return y;
+}
+function matchCols(G){ return [{label:"Bowler"},{label:"Hdcp",w:30,align:"right"},...[...Array(G)].map((_,g)=>({label:"G"+(g+1),w:25,align:"right"})),{label:"Series",w:36,align:"right"},{label:"Ser+Hdcp",w:50,align:"right"}]; }
+function matchSideRows(X,Yt,done,sx,sy){ const G=config.gamesPerWeek;
+  const ser=r=>r.gs.some(v=>v!=null)?r.gs.reduce((s,v)=>s+(v??0),0):"", serH=r=>{ const n=r.gs.filter(v=>v!=null).length; return n?ser(r)+r.hcp*n:""; };
+  const sum=a=>a.every(v=>v!=null)?a.reduce((s,v)=>s+v,0):""; const win=(a,b)=>a!=null&&b!=null&&a>b;
+  return [...X.rows.map(r=>({cells:[{v:r.abs?r.roster+" (absent)":r.sub?r.name+" (sub)":r.name,color:r.abs||r.vac?GREY:INK},r.hcp,...r.gs.map(v=>v??""),{v:ser(r),bold:true},{v:serH(r),bold:true}]})),
+        {cells:[{v:"Scratch",color:GREY},"",...X.scr.map(v=>v??""),sum(X.scr),""],color:GREY},
+        {cells:[{v:"Handicap",color:GREY},"",...X.scr.map(()=>X.hc),X.hc*G,""],color:GREY},
+        {cells:[{v:"Total",bold:true},"",...X.tot.map((v,g)=>({v:v??"",bold:true,color:win(v,Yt.tot[g])?GREEN:INK})),{v:done?sx:"",bold:true,color:done&&sx>sy?GREEN:INK},""],fill:HEAD}]; }
+function recapPdfDoc(w){
+  const S=computeThrough(w), doc=new PdfDoc({footer:pdfFooter()});
+  let y=pdfTitle(doc,`Week ${w} of ${config.weeks}${weeks[w]?.date?" · "+weeks[w].date:""} · Handicap ${config.hcpPct}% of ${config.hcpBasis}${config.hcpMax>0?", max "+config.hcpMax:""} · Hdcp shown is each bowler's handicap for that week`);
+  const half=(doc.cw-14)/2;
+  const y1=pdfTable(doc,0,pdfH2(doc,0,y,half,"Standings"),half,STAND_COLS.filter((_,i)=>i!==4),standingsRows(S).map(r=>({cells:r.cells.filter((_,i)=>i!==4)})),{size:8});
+  const y2=pdfTable(doc,half+14,pdfH2(doc,half+14,y,half,"Week "+w+" Results"),half,RES_COLS,resultsRows(S,w),{size:8});
+  y=Math.max(y1,y2)+6;
+  y=pdfH2(doc,0,y,doc.cw,"Week "+w+" Matches");
+  const G=config.gamesPerWeek, mc=matchCols(G);
+  for(const m of weekDetail(w)){
+    doc.text(0,y+10,`${m.A.t.name}  ${fmt(m.pa)}`,{size:9.5,bold:true}); const lw=textW(`${m.A.t.name}  ${fmt(m.pa)}`,9.5,true);
+    doc.text(lw+10,y+10,"vs",{size:9.5,bold:true,color:GREY}); doc.text(lw+30,y+10,`${fmt(m.pb)}  ${m.B.t.name}${m.done?"":"  (in progress)"}`,{size:9.5,bold:true}); y+=14;
+    const a=pdfTable(doc,0,y,half,mc,matchSideRows(m.A,m.B,m.done,m.sa,m.sb),{size:8,title:m.A.t.name,titleInHead:true});
+    const b=pdfTable(doc,half+14,y,half,mc,matchSideRows(m.B,m.A,m.done,m.sb,m.sa),{size:8,title:m.B.t.name,titleInHead:true});
+    y=Math.max(a,b)+8; }
+  y+=2;
+  y=highsTable(doc,pdfH2(doc,0,y,doc.cw,"High Scores"),S,w);
+  doc.fitPage(y); return doc;
+}
+// condensed one-page standings sheet
+function standingsSheetDoc(w){
+  const S=computeThrough(w), G=config.gamesPerWeek, doc=new PdfDoc({margin:28,footer:pdfFooter()});
+  const cw=doc.cw, BLK=[0,0,0], LG=[0.45,0.45,0.45];
+  const tnum=id=>config.teams.findIndex(t=>t.id===id)+1, tname=id=>config.teams.find(t=>t.id===id)?.name||"";
+  // plain black-and-white table: bold underlined headings, no cell lines
+  const ptab=(x,y,width,cols,rows,o={})=>{ const sz=o.size||7.2, rh=sz*1.42, fixed=cols.reduce((s,c)=>s+(c.w||0),0), flex=cols.filter(c=>!c.w).length;
+    const ws=cols.map(c=>c.w||(width-fixed)/Math.max(1,flex));
+    if(o.title){ doc.text(x,y+sz+1,o.title,{size:sz+0.8,bold:true}); y+=rh+1; }
+    let cx=x; cols.forEach((c,i)=>{ const al=c.align||"left"; if(c.label) doc.text(al==="right"?cx+ws[i]-2:al==="center"?cx+ws[i]/2:cx+1,y+sz,fitText(c.label,sz-0.6,true,ws[i]-3),{size:sz-0.6,bold:true,align:al}); cx+=ws[i]; });
+    y+=rh-1; doc.line(x,y,x+width,y,0.6,BLK);
+    for(const r of rows){ cx=x; let ci=0; for(const cell of r){ const c=(cell&&typeof cell==="object")?cell:{v:cell}; const span=c.span||1, wd=ws.slice(ci,ci+span).reduce((a,b)=>a+b,0), al=c.align||cols[ci].align||"left";
+        if(c.v!==""&&c.v!=null) doc.text(al==="right"?cx+wd-2:al==="center"?cx+wd/2:cx+1,y+sz+1.5,fitText(c.v,sz,!!c.bold,wd-3),{size:sz,bold:!!c.bold,color:c.color||BLK,align:al}); cx+=wd; ci+=span; }
+      y+=rh; }
+    return y; };
+  const head=(y,t)=>{ doc.text(0,y+9,t,{size:8.6,bold:true}); doc.line(0,y+11.5,cw,y+11.5,1,BLK); return y+15; };
+  // heading
+  let y=0;
+  doc.text(cw/2,12,config.name,{size:13,bold:true,align:"center"});
+  doc.text(cw/2,23,`Fishers Island Community Center${config.season?" · "+config.season+" season":""}`,{size:7.5,align:"center"});
+  doc.text(cw/2,32,`Week ${w} of ${config.weeks}${weeks[w]?.date?" · "+weeks[w].date:""} · Handicap ${config.hcpPct}% of ${config.hcpBasis}`,{size:7.5,align:"center"});
+  y=38;
+  // team standings
+  y=head(y,"Team Standings");
+  const lw={}; for(const r of (S.results[w]||[])){ lw[r.a]=[r.pa,r.pb]; lw[r.b]=[r.pb,r.pa]; }
+  const hiT=(k,id)=>{ const x=S.season[k].find(e=>e.pid===id); return x?x.v:""; };
+  const ts=Object.values(S.teams).sort((a,b)=>b.won-a.won||b.hdcp-a.hdcp);
+  y=ptab(0,y,cw,[{label:"Place",w:30,align:"right"},{label:"Team Name"},{label:"Pts Won",w:32,align:"right"},{label:"Pts Lost",w:32,align:"right"},{label:"% Won",w:30,align:"right"},{label:"Last Wk",w:34,align:"right"},{label:"Scratch Pins",w:46,align:"right"},{label:"Hdcp Pins",w:40,align:"right"},{label:"Pins+Hdcp",w:44,align:"right"},{label:"Hi Hdcp Gm",w:42,align:"right"},{label:"Hi Hdcp Sr",w:42,align:"right"}],
+    ts.map((t,i)=>[i+1,{v:t.name,bold:true},{v:fmt(t.won),bold:true},fmt(t.lost),t.won+t.lost?((t.won/(t.won+t.lost))*100).toFixed(1):"",lw[t.id]?fmt(lw[t.id][0])+"-"+fmt(lw[t.id][1]):"",t.scratch.toLocaleString(),(t.hdcp-t.scratch).toLocaleString(),t.hdcp.toLocaleString(),hiT("thg",t.id),hiT("ths",t.id)]))+6;
+  // last week, one line per match
+  y=head(y,`Review of Week ${w}  (team totals with handicap)`);
+  const mcols=side=>[{label:"Team"},...[...Array(G)].map((_,g)=>({label:`-${g+1}-`,w:26,align:"right"})),{label:"Total",w:32,align:"right"},{label:"Won",w:24,align:"right"}];
+  const half=(cw-14)/2, md=weekDetail(w);
+  const mrow=(X,pts,tot)=>[{v:`${tnum(X.t.id)}-${X.t.name}`,bold:true},...X.tot.map(v=>v??""),tot,{v:fmt(pts),bold:true}];
+  const gc=()=>[...Array(G)].map((_,g)=>({label:`-${g+1}-`,w:24,align:"right"}));
+  y=ptab(0,y,cw,[{label:"Team"},...gc(),{label:"Total",w:30,align:"right"},{label:"Won",w:24,align:"right"},{label:"",w:22,align:"center"},{label:"Team"},...gc(),{label:"Total",w:30,align:"right"},{label:"Won",w:24,align:"right"}],
+    md.map(m=>[...mrow(m.A,m.pa,m.done?m.sa:""),{v:"vs",align:"center",color:LG},...mrow(m.B,m.pb,m.done?m.sb:"")]))+2;
+  if(w<config.weeks){ const nm=((weeks[w+1]?.matchups)||roundRobin(config.teamsCount,w)).filter(x=>x.a&&x.b);
+    doc.text(0,y+7,`Week ${w+1}:  `+nm.map(x=>`${tnum(x.a)}-${tname(x.a)} vs ${tnum(x.b)}-${tname(x.b)}`).join("   ·   "),{size:6.8,color:LG}); y+=12; }
+  y+=4;
+  // rosters, two teams across
+  y=head(y,"Team Rosters");
+  const rcols=[{label:"Name"},{label:"Avg",w:28,align:"right"},{label:"Hdcp",w:28,align:"right"},{label:"Total Pins",w:44,align:"right"},{label:"Games",w:30,align:"right"},{label:"High Game",w:38,align:"right"},{label:"High Series",w:42,align:"right"}];
+  const prow=p=>{ const x=S.players[p.id]; if(isVac(p,w)) return [{v:"Vacant",color:LG},"","","","","",""];
+    return [{v:p.name,bold:true},x.avg?(x.est?x.avg+"e":x.avg):"",x.avg?x.hcp:"",x.pins?x.pins.toLocaleString():"",x.games||"",x.hg||"",x.hs||""]; };
+  const blocks=config.teams.map((t,i)=>({title:`${i+1} - ${t.name}`,rows:t.players.map(prow)}));
+  const usedSubs=config.subs.filter(s=>S.players[s.id].games>0); if(usedSubs.length) blocks.push({title:"Substitutes",rows:usedSubs.map(prow)});
+  for(let i=0;i<blocks.length;i+=2){ let m=y; for(let j=0;j<2&&i+j<blocks.length;j++) m=Math.max(m,ptab(j*(half+14),y,half,rcols,blocks[i+j].rows,{title:blocks[i+j].title})); y=m+4; }
+  doc.text(0,y+4,`Season stats through week ${w}. Avg and Hdcp are for week ${w+1}.  "e" = average not yet established (fewer than 3 games).  High game and series are scratch.`,{size:6.5,color:LG}); y+=10;
+  // high scores, men and women together
+  y=head(y,"High Scores");
+  const cats=[["Scratch Game","sg"],["Scratch Series","ss"],["Hdcp Game","hg"],["Hdcp Series","hs"],["Team Scratch Game","tsg"],["Team Scratch Series","tss"],["Team Hdcp Game","thg"],["Team Hdcp Series","ths"]];
+  const cell=x=>x?`${x.name}  ${x.v}`:"";
+  y=ptab(0,y,cw,[{label:"",w:90},{label:"1st"},{label:"2nd"},{label:"3rd"}],cats.map(([l,k])=>{ const t=top3(S.season[k]); return [{v:l,bold:true},cell(t[0]),cell(t[1]),cell(t[2])]; }));
+  doc.text(0,y+9,`Season to date through week ${w}.`,{size:6.5,color:LG}); y+=12;
+  doc.fitPage(y); return doc;
+}
+function reportPdf(kind,w){
+  const S=compute(), doc=new PdfDoc({footer:pdfFooter()}); let y;
+  if(kind==="standings"){ const last=w&&S.weeksBowled.includes(w)?w:S.weeksBowled[S.weeksBowled.length-1];
+    y=pdfTitle(doc,`Standings after week ${last||0} of ${config.weeks}${last&&weeks[last]?.date?" · "+weeks[last].date:""} · Handicap ${config.hcpPct}% of ${config.hcpBasis}${config.hcpMax>0?", max "+config.hcpMax:""}`);
+    const Sx=last?computeThrough(last):S;
+    y=pdfTable(doc,0,pdfH2(doc,0,y,doc.cw,"Standings"),doc.cw,STAND_COLS,standingsRows(Sx),{size:9.5})+10;
+    if(last) y=pdfTable(doc,0,pdfH2(doc,0,y,doc.cw,"Week "+last+" Results"),doc.cw,RES_COLS,resultsRows(Sx,last),{size:9.5})+8;
+    doc.text(0,y+6,`Points: ${fmt(config.ptsPerGame)} per game won, ${fmt(config.ptsSeries)} for higher series, all with handicap. Ties split the points.`,{size:7.5,color:GREY}); }
+  else if(kind==="averages"){ y=pdfTitle(doc,`Averages and handicaps after week ${S.weeksBowled.length} · Handicap ${config.hcpPct}% of ${config.hcpBasis}${config.hcpMax>0?", max "+config.hcpMax:""}`);
+    const ps=Object.values(S.players).sort((a,b)=>b.avg-a.avg||a.name.localeCompare(b.name));
+    pdfTable(doc,0,y,doc.cw,[{label:"#",w:22,align:"right"},{label:"Bowler"},{label:"Team",w:120},{label:"Games",w:40,align:"right"},{label:"Pins",w:50,align:"right"},{label:"Average",w:50,align:"right"},{label:"Hdcp",w:40,align:"right"},{label:"High Game",w:56,align:"right"},{label:"High Series",w:60,align:"right"}],
+      ps.map((p,i)=>({cells:[i+1,{v:p.name,bold:true},p.team,p.games,p.pins.toLocaleString(),{v:p.avg?(p.est?p.avg+" est":p.avg):"",bold:true},{v:p.avg?p.hcp:"",bold:true},p.hg||"",p.hs||""]})),{size:9,paginate:true}); }
+  else if(kind==="highs"){ y=pdfTitle(doc,`High scores · top 3 per list, each bowler or team once${w?" · "+wkLabel(w):""}`); highsTable(doc,y,S,w); }
+  else if(kind==="results"){ y=pdfTitle(doc,`Weekly results · ${wkLabel(w)} · green totals won that game`); const G=config.gamesPerWeek;
+    const cols=matchCols(G), side=matchSideRows, half=(doc.cw-14)/2;
+    for(const m of weekDetail(w)){ const est=(m.A.rows.length+5)*15+30; if(y+est>doc.ch){ doc.newPage(); y=0; }
+      doc.text(0,y+12,`${m.A.t.name}  ${fmt(m.pa)}   vs   ${fmt(m.pb)}  ${m.B.t.name}${m.done?"":"  (in progress)"}`,{size:11,bold:true}); y+=18;
+      const a=pdfTable(doc,0,y,half,cols,side(m.A,m.B,m.done,m.sa,m.sb),{size:8.5,title:m.A.t.name});
+      const b=pdfTable(doc,half+14,y,half,cols,side(m.B,m.A,m.done,m.sb,m.sa),{size:8.5,title:m.B.t.name}); y=Math.max(a,b)+16; } }
+  else if(kind==="scores"){ y=pdfTitle(doc,"Every score, all weeks"); const G=config.gamesPerWeek, rows=[];
+    for(const wn of Object.keys(weeks).map(Number).sort((a,b)=>a-b)){ const wk=weeks[wn], en=entering(wn);
+      for(const t of config.teams) for(const p of t.players){ const e=(wk.games||{})[p.id]; if(!e) continue;
+        const sub=!e.abs&&e.sub?config.subs.find(s=>s.id===e.sub):null, by=sub||p, gs=[...Array(G)].map((_,g)=>e.abs?"":((e.g||[])[g]??"")), real=gs.filter(v=>v!=="");
+        rows.push({cells:[wn,wk.date||"",t.name,e.abs?{v:p.name+" (absent)",color:GREY}:by.name+(sub?" (sub)":""),en[by.id]?.hcp??"",...gs,{v:real.length?real.reduce((a,b)=>a+Number(b),0):"",bold:true}]}); } }
+    pdfTable(doc,0,y,doc.cw,[{label:"Wk",w:24,align:"right"},{label:"Date",w:60},{label:"Team",w:110},{label:"Bowler"},{label:"Hdcp",w:32,align:"right"},...[...Array(G)].map((_,g)=>({label:"G"+(g+1),w:32,align:"right"})),{label:"Series",w:40,align:"right"}],rows,{size:8.5,paginate:true}); }
+  return doc;
+}
+const REPORTS=[["sheet","Standings sheet"],["recap","Weekly recap"],["results","Weekly results"],["averages","Averages & handicaps"],["highs","High scores"],["scores","Every score"]];
+let reportView="sheet";
+function reportDoc(kind){
+  if(kind==="recap") return recapPdfDoc(recapWeek);
+  if(kind==="sheet") return standingsSheetDoc(recapWeek);
+  return reportPdf(kind,recapWeek);
+}
+function printReport(kind){
+  if(!recapWeek) return toast("Enter a week of scores first.");
+  const imgs=reportDoc(kind).images(150), fr=document.createElement("iframe");
+  fr.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0"; document.body.appendChild(fr);
+  const d=fr.contentDocument; d.open();
+  d.write(`<!doctype html><html><head><title>${esc(config.name)}</title><style>@page{size:letter;margin:0}html,body{margin:0;padding:0}img{display:block;width:8.5in;height:11in;page-break-after:always;break-after:page}img:last-child{page-break-after:auto;break-after:auto}</style></head><body>${imgs.map(u=>`<img src="${u}">`).join("")}</body></html>`);
+  d.close();
+  const go=()=>{ try{ fr.contentWindow.focus(); fr.contentWindow.print(); }catch(_){ toast("Printing isn't available here. Use Download PDF instead."); } setTimeout(()=>fr.remove(),60000); };
+  const im=[...d.images]; let left=im.length; if(!left) return go(); im.forEach(i=>{ if(i.complete){ if(--left===0) go(); } else i.onload=i.onerror=()=>{ if(--left===0) go(); }; });
+}
+function reportFile(kind){ const names={sheet:`week-${recapWeek}-standings`,recap:`week-${recapWeek}-recap`,results:`week-${recapWeek}-results`,averages:"averages",highs:"high-scores",scores:"all-scores"}; return `${slug()}-${names[kind]||kind}.pdf`; }
+function exportPdf(kind){
+  if(!recapWeek) return toast("Enter a week of scores first.");
+  return dl(reportFile(kind),reportDoc(kind).bytes());
+}
+const canShareFiles=()=>{ try{ return !!(navigator.canShare&&navigator.canShare({files:[new File([new Uint8Array([37])],"t.pdf",{type:"application/pdf"})]})); }catch(_){ return false; } };
+async function shareReport(kind){
+  if(!recapWeek) return toast("Enter a week of scores first.");
+  const name=reportFile(kind), f=new File([reportDoc(kind).bytes()],name,{type:"application/pdf"}), label=REPORTS.find(r=>r[0]===kind)?.[1]||"Report";
+  if(!(navigator.canShare&&navigator.canShare({files:[f]}))) return toast("Sharing isn't available on this device. Use Download PDF instead.");
+  try{ await navigator.share({files:[f],title:`${config.name} · ${label}`,text:`${config.name} · ${label}${["sheet","recap","results"].includes(kind)?` · week ${recapWeek}`:""}`}); }
+  catch(e){ if(e&&e.name!=="AbortError") toast("Couldn't share the report. Try Download PDF instead."); }
+}
+
+// ---------- print & export ----------
+function top3(arr){ const seen=new Set(), items=[]; for(const x of arr){ if(seen.has(x.pid)) continue; seen.add(x.pid); items.push(x); if(items.length===3) break; } return items; }
+let recapWeek=null, pendingRestore=null;
+const RECAP_CSS=`.rc{background:#fff;color:#111;font:10px/1.25 "Public Sans",Arial,sans-serif;padding:14px;width:7.4in;box-sizing:border-box}
+.rc h1{font:800 20px "Big Shoulders Display","Arial Narrow",Arial,sans-serif;text-transform:uppercase;letter-spacing:.02em;margin:0;color:#111}
+.rc .sub{color:#555;margin:1px 0 0}
+.rc h2{font:700 9.5px Arial,sans-serif;text-transform:uppercase;letter-spacing:.07em;margin:8px 0 3px;border-bottom:1.5px solid #111;padding-bottom:1px;color:#111}
+.rc table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+.rc th,.rc td{border:1px solid #c6c6c6;padding:1px 4px;text-align:right;color:#111;white-space:nowrap;line-height:1.3;font-size:10px}
+.rc th{background:#ececec;font-size:8px;text-transform:uppercase;letter-spacing:.03em;font-weight:700}
+.rc .l{text-align:left}
+.rc .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+.rc .teams{display:grid;grid-template-columns:1fr 1fr;gap:5px 10px;align-items:start}
+.rc .tm th:first-child{font-size:9.5px;text-transform:none;letter-spacing:0;background:#dde4ec}
+.rc .m{color:#666}
+.rc .hs{table-layout:fixed}
+.rc .hs col.c{width:.95in}
+.rc .hc{display:flex;justify-content:space-between;gap:3px;min-width:0}
+.rc .hc span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}`;
+
+document.head.appendChild(Object.assign(document.createElement("style"),{textContent:RECAP_CSS+"\nlabel.btn{position:relative}label.btn:focus-within{outline:2px solid var(--lane);outline-offset:1px}"}));
+function weekLines(w){
+  const wk=weeks[w]; const out={}; if(!wk) return out;
+  for(const t of config.teams) for(const p of t.players){ const e=(wk.games||{})[p.id]; if(!e) continue;
+    if(e.abs) out[p.id]={abs:true}; else out[(e.sub&&config.subs.some(s=>s.id===e.sub))?e.sub:p.id]={g:e.g||[], forTeam:t.name}; }
+  return out;
+}
+function recapBody(S,w){
+  const G=config.gamesPerWeek, wk=weeks[w]||{}, tn=id=>esc(config.teams.find(t=>t.id===id)?.name);
+  const ts=Object.values(S.teams).sort((a,b)=>b.won-a.won||b.hdcp-a.hdcp);
+  const games=wk.games||{}, subFor={};
+  for(const t of config.teams) for(const p of t.players){ const e=games[p.id]; if(e&&!e.abs&&e.sub) subFor[e.sub]={g:e.g||[],team:t.name}; }
+  const gcells=(gs)=>{ const real=gs.filter(v=>v!=null); return gs.map(v=>`<td>${v??""}</td>`).join("")+`<td><b>${real.length?real.reduce((a,b)=>a+b,0):""}</b></td>`; };
+  const tail=x=>`<td>${x.avg||""}</td><td>${x.avg?x.hcp:""}</td>`;
+  const prow=(p,nm)=>{ if(isVac(p,w)){ const V=VAC(); return `<tr><td class="l m">Vacant</td><td colspan="${G+1}" class="l m">vacant ${V.score} + ${V.hcp} hdcp</td><td></td><td></td></tr>`; }
+    const x=S.players[p.id], e=games[p.id];
+    let cells; if(!e) cells=`<td colspan="${G+1}"></td>`;
+    else if(e.abs) cells=`<td colspan="${G+1}" class="l m">absent (blind)</td>`;
+    else if(e.sub){ const s=config.subs.find(q=>q.id===e.sub); cells=`<td colspan="${G+1}" class="l m">sub: ${esc(s?.name||"")}</td>`; }
+    else cells=gcells([...Array(G)].map((_,g)=>{const v=(e.g||[])[g]; return v==null||v===""?null:Number(v);}));
+    return `<tr><td class="l">${esc(p.name)}</td>${cells}${tail(x)}</tr>`; };
+  const head=title=>`<thead><tr><th class="l">${title}</th>${[...Array(G)].map((_,g)=>`<th>G${g+1}</th>`).join("")}<th>Ser</th><th>Avg</th><th>Hdcp</th></tr></thead>`;
+  const subRows=config.subs.filter(s=>subFor[s.id]).map(s=>`<tr><td class="l">${esc(s.name)} <span class="m">for ${esc(subFor[s.id].team)}</span></td>${gcells([...Array(G)].map((_,g)=>{const v=subFor[s.id].g[g]; return v==null||v===""?null:Number(v);}))}${tail(S.players[s.id])}</tr>`).join("");
+  const Wk=S.weekly[w]||{sg:[],ss:[],hg:[],hs:[],tsg:[],tss:[],thg:[],ths:[]};
+  const cell=(x,season)=>x?`<td class="l"><div class="hc"><span>${esc(x.name)}${season?` <i class="m">w${x.week}</i>`:""}</span><b>${x.v}</b></div></td>`:`<td></td>`;
+  const hrow=(label,k)=>{ const a=top3(Wk[k]), b=top3(S.season[k]); return `<tr><td class="l"><b>${label}</b></td>${[0,1,2].map(i=>cell(a[i])).join("")}${[0,1,2].map(i=>cell(b[i],1)).join("")}</tr>`; };
+  return `<h1>${esc(config.name)}</h1>
+  <p class="sub">Week ${w} of ${config.weeks}${wk.date?" · "+esc(wk.date):""} · Handicap ${config.hcpPct}% of ${config.hcpBasis}${config.hcpMax>0?`, max ${config.hcpMax}`:""} · Avg and Hdcp are for next week</p>
+  <div class="two"><div><h2>Standings</h2><table><thead><tr><th></th><th class="l">Team</th><th>Won</th><th>Lost</th><th>Scratch</th><th>+Hdcp</th></tr></thead><tbody>
+  ${ts.map((t,i)=>`<tr><td>${i+1}</td><td class="l">${esc(t.name)}</td><td><b>${fmt(t.won)}</b></td><td>${fmt(t.lost)}</td><td>${t.scratch.toLocaleString()}</td><td>${t.hdcp.toLocaleString()}</td></tr>`).join("")}</tbody></table></div>
+  <div><h2>Week ${w} Results</h2><table><thead><tr><th class="l">Team</th><th>Pts</th><th>Total</th><th class="l">Opponent</th><th>Pts</th><th>Total</th></tr></thead><tbody>
+  ${(S.results[w]||[]).map(r=>`<tr><td class="l">${tn(r.a)}</td><td><b>${fmt(r.pa)}</b></td><td>${r.ta.toLocaleString()}</td><td class="l">${tn(r.b)}</td><td><b>${fmt(r.pb)}</b></td><td>${r.tb.toLocaleString()}</td></tr>`).join("")}</tbody></table></div></div>
+  <h2>Bowlers</h2><div class="teams">${config.teams.map(t=>`<table class="tm">${head(esc(t.name))}<tbody>${t.players.map(prow).join("")}</tbody></table>`).join("")}
+  ${subRows?`<table class="tm">${head("Subs")}<tbody>${subRows}</tbody></table>`:""}</div>
+  <h2>High Scores</h2><table class="hs"><colgroup><col class="c">${"<col>".repeat(6)}</colgroup><thead><tr><th class="l"></th><th class="l" colspan="3">Week ${w}</th><th class="l" colspan="3">Season</th></tr></thead><tbody>
+  ${hrow("Game","sg")}${hrow("Series","ss")}${hrow("Game hdcp","hg")}${hrow("Series hdcp","hs")}${hrow("Team game","tsg")}${hrow("Team series","tss")}${hrow("Team game hdcp","thg")}${hrow("Team series hdcp","ths")}
+  </tbody></table>`;
+}
+function computeThrough(w){ const keep=weeks, sub={}; for(const k in keep) if(Number(k)<=w) sub[k]=keep[k]; weeks=sub; const S=compute(); weeks=keep; return S; }
+function renderExport(S){
+  const wks=S.weeksBowled; if(recapWeek==null||!wks.includes(recapWeek)) recapWeek=wks[wks.length-1]??null;
+  const dis=canWrite?"":"disabled";
+  $("#view").innerHTML=`<section class="sec"><h2>Print &amp; Export Reports</h2>
+   <p class="note">Tap a report to preview it. Tap <b>Print</b> to send it to a printer, <b>Share</b> to send it by text, email or another app, or <b>Download PDF</b> to save it.</p>
+   <div class="row"><label class="f" style="flex-direction:row;align-items:center;gap:8px">Week <select id="rw" aria-label="Report week">${wks.length?wks.map(w=>`<option value="${w}" ${w===recapWeek?"selected":""}>Week ${w}${weeks[w]?.date?" · "+esc(weeks[w].date):""}</option>`).join(""):"<option>No weeks bowled yet</option>"}</select></label></div>
+   ${wks.length?`<div class="subtabs" role="tablist" aria-label="Reports">${REPORTS.map(([k,l])=>`<button role="tab" class="subtab" data-rep="${k}" aria-selected="${k===reportView}">${esc(l)}</button>`).join("")}</div>
+   <div class="row" style="justify-content:space-between"><span class="note" id="prevNote"></span><span class="row"><button class="btn" data-print="${reportView}">Print</button>${canShareFiles()?`<button class="btn ghost" data-share="${reportView}">Share</button>`:""}<button class="btn ghost" data-pdf="${reportView}">Download PDF</button></span></div>
+   <div class="pdfprev" id="pdfPrev"></div>`:`<div class="card empty">Enter a week of scores to make reports.</div>`}</section>
+  <section class="sec"><h2>Export Data</h2><div class="grid2">
+   <div class="card sec"><h3>Spreadsheets (CSV)</h3><p class="note">Open in Excel, Google Sheets or Numbers.</p>
+    <div class="row"><button class="btn ghost" id="dlStand">Standings</button><button class="btn ghost" id="dlAvg">Averages</button><button class="btn ghost" id="dlScores">Every score</button></div></div>
+   <div class="card sec"><h3>Full backup</h3><p class="note">One file with all settings, teams, subs and scores. Keep a copy each week. Restoring replaces everything in this league with the backup.</p>
+    <div class="row" id="restoreRow"><button class="btn ghost" id="dlBackup">Download backup</button>
+    <label class="btn ghost" style="display:inline-flex;align-items:center" ${canWrite?"":'aria-disabled="true"'}>Restore from backup<input type="file" id="restoreFile" accept=".json,application/json" ${dis} style="position:absolute;opacity:0;width:1px;height:1px"></label></div></div>
+  </div></section>`;
+  if(wks.length){ const d=reportDoc(reportView), box=$("#pdfPrev"); d.renderTo(box);
+    $("#prevNote").textContent=`${REPORTS.find(r=>r[0]===reportView)[1]} · week ${recapWeek} · ${d.pages.length} page${d.pages.length===1?"":"s"}`; }
+}
+const slug=()=>(config.name||"league").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"league";
+const csv=rows=>rows.map(r=>r.map(v=>{v=v==null?"":String(v); return /[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v;}).join(",")).join("\r\n")+"\r\n";
+function dl(filename,data){
+  const type=filename.endsWith(".pdf")?"application/pdf":(filename.endsWith(".csv")?"text/csv":filename.endsWith(".json")?"application/json":"text/html")+";charset=utf-8";
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([data],{type})); a.download=filename;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},2000); toast("Downloaded "+filename);
+}
+function exportCsv(kind){
+  const S=compute(), G=config.gamesPerWeek;
+  if(kind==="stand"){ const ts=Object.values(S.teams).sort((a,b)=>b.won-a.won||b.hdcp-a.hdcp);
+    return dl(`${slug()}-standings.csv`,csv([["Rank","Team","Won","Lost","Pct","Scratch Pins","Pins + Hdcp"],...ts.map((t,i)=>[i+1,t.name,t.won,t.lost,t.won+t.lost?(t.won/(t.won+t.lost)).toFixed(3):"",t.scratch,t.hdcp])])); }
+  if(kind==="avg"){ const ps=Object.values(S.players).sort((a,b)=>b.avg-a.avg);
+    return dl(`${slug()}-averages.csv`,csv([["Bowler","Team","Games","Pins","Average","Handicap","High Game","High Series"],...ps.map(p=>[p.name,p.team,p.games,p.pins,p.avg||"",p.avg?p.hcp:"",p.hg||"",p.hs||""])])); }
+  const rows=[["Week","Date","Team","Roster Bowler","Bowled By","Absent","Handicap",...[...Array(G)].map((_,g)=>"Game "+(g+1)),"Series"]];
+  for(const w of Object.keys(weeks).map(Number).sort((a,b)=>a-b)){ const wk=weeks[w], en=entering(w);
+    for(const t of config.teams) for(const p of t.players){ const e=(wk.games||{})[p.id]; if(!e) continue;
+      const sub=!e.abs&&e.sub?config.subs.find(s=>s.id===e.sub):null; const by=sub||p; const h=en[by.id]?.hcp??"";
+      const gs=[...Array(G)].map((_,g)=>e.abs?"":(e.g||[])[g]??""); const real=gs.filter(v=>v!=="");
+      rows.push([w,wk.date||"",t.name,p.name,e.abs?"":by.name+(sub?" (sub)":""),e.abs?"yes":"",h,...gs,real.length?real.reduce((a,b)=>a+Number(b),0):""]); } }
+  return dl(`${slug()}-all-scores.csv`,csv(rows));
+}
+function recapDoc(w){
+  const S=computeThrough(w);
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(config.name)} - Week ${w} Recap</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=Public+Sans:wght@400;700&display=swap">
+<style>body{margin:0;background:#fff}${RECAP_CSS}.rc{margin:0 auto}.bar{padding:12px 20px;background:#1d5aa0}.bar button{font:700 15px Arial,sans-serif;padding:8px 18px;border:0;border-radius:6px;background:#fff;color:#1d5aa0;cursor:pointer}
+@media print{.bar{display:none}.rc{padding:0}@page{size:auto;margin:.4in}}</style></head>
+<body><div class="bar"><button onclick="window.print()">Print this recap</button></div><div class="rc">${recapBody(S,w)}</div><script>function fit(){var r=document.querySelector(".rc");r.style.zoom=1;var z=Math.min(1,(10*96)/r.scrollHeight);r.style.zoom=z;}addEventListener("beforeprint",fit);addEventListener("afterprint",function(){document.querySelector(".rc").style.zoom=1;});<\/script></body></html>`;
+}
+function exportRecap(){ return dl(`${slug()}-week-${recapWeek}-recap.html`,recapDoc(recapWeek)); }
+function backupData(){ return JSON.stringify({app:"League Secretary",format:1,exportedAt:new Date().toISOString(),config,weeks:Object.values(weeks)},null,1); }
+async function doRestore(){
+  const b=pendingRestore; pendingRestore=null;
+  try{
+    await db.doc("league/config").set(normalize(b.config));
+    const keep=new Set();
+    for(const w of b.weeks){ const id="w"+String(w.week).padStart(2,"0"); keep.add(id); await db.doc("weeks/"+id).set(w); }
+    for(const k of Object.keys(weeks)){ const id="w"+String(k).padStart(2,"0"); if(!keep.has(id)) await db.doc("weeks/"+id).delete(); }
+    draft=null; toast(`Restored ${b.weeks.length} week${b.weeks.length===1?"":"s"} from backup.`);
+  }catch(_){ toast("Restore stopped partway. Try again with the same backup file."); }
+  render();
+}
+
+// ---------- league website (GitHub Pages) ----------
+const GH_KEY="leagueSecretary.github.v1";
+function ghSettings(){ try{ return JSON.parse(localStorage.getItem(GH_KEY))||{}; }catch(_){ return {}; } }
+function ghStore(s){ try{ localStorage.setItem(GH_KEY,JSON.stringify(s)); }catch(_){ toast("Couldn't save the website settings on this device."); } }
+const ghReady=()=>{ const s=ghSettings(); return !!(s.owner&&s.repo&&s.token); };
+function siteUrl(s=ghSettings()){ if(!s.owner||!s.repo) return ""; const o=s.owner.toLowerCase(); return s.repo.toLowerCase()===o+".github.io"?`https://${o}.github.io/`:`https://${o}.github.io/${s.repo}/`; }
+const b64=str=>{ const bytes=new TextEncoder().encode(str); let bin=""; for(let i=0;i<bytes.length;i+=0x8000) bin+=String.fromCharCode(...bytes.subarray(i,i+0x8000)); return btoa(bin); };
+const unb64=c=>new TextDecoder().decode(Uint8Array.from(atob(c.replace(/\s/g,"")),ch=>ch.charCodeAt(0)));
+async function gh(path,opts={},s=ghSettings()){
+  return fetch(`https://api.github.com/repos/${encodeURIComponent(s.owner)}/${encodeURIComponent(s.repo)}${path}`,{...opts,cache:"no-store",
+    headers:{Authorization:`Bearer ${s.token}`,Accept:"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28",...(opts.body?{"Content-Type":"application/json"}:{})}});
+}
+function ghErr(status){
+  if(status===401) return "GitHub didn't accept the token. Check that it was copied in full and hasn't expired.";
+  if(status===404) return "Repository not found. Check the username and repository name, and that the token was given access to this repository.";
+  if(status===403) return "The token can't write to this repository. Edit the token and set Contents to “Read and write”.";
+  if(status===409||status===422) return "GitHub refused the update. Wait a few seconds and publish again.";
+  return "Couldn't reach GitHub. Check the internet connection and try again.";
+}
+async function ghPut(file,b64content,msg,branch){
+  let sha; const g=await gh(`/contents/${file}?ref=${encodeURIComponent(branch)}`);
+  if(g.ok) sha=(await g.json()).sha; else if(g.status!==404) throw new Error(ghErr(g.status));
+  const r=await gh(`/contents/${file}`,{method:"PUT",body:JSON.stringify({message:msg,content:b64content,branch,...(sha?{sha}:{})})});
+  if(!r.ok) throw new Error(ghErr(r.status));
+}
+async function ghExists(file,branch){ const g=await gh(`/contents/${file}?ref=${encodeURIComponent(branch)}`); return g.ok; }
+const ICON_SVG="<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\">  <defs><linearGradient id=\"g\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#2a6fbf\"/><stop offset=\"1\" stop-color=\"#16467f\"/></linearGradient></defs>  <rect width=\"512\" height=\"512\" fill=\"url(#g)\"/>  <g transform=\"translate(-22 18) scale(.86) translate(41 0)\"><clipPath id=\"pc\"><path d=\"M256 70 C300 70 312 110 306 150 C300 185 284 200 284 215 C284 240 336 270 340 340 C344 400 316 440 300 455 L212 455 C196 440 168 400 172 340 C176 270 228 240 228 215 C228 200 212 185 206 150 C200 110 212 70 256 70 Z\"/></clipPath><path d=\"M256 70 C300 70 312 110 306 150 C300 185 284 200 284 215 C284 240 336 270 340 340 C344 400 316 440 300 455 L212 455 C196 440 168 400 172 340 C176 270 228 240 228 215 C228 200 212 185 206 150 C200 110 212 70 256 70 Z\" fill=\"#ffffff\"/>  <g clip-path=\"url(#pc)\" fill=\"#c4313b\"><rect x=\"150\" y=\"178\" width=\"220\" height=\"14\"/><rect x=\"150\" y=\"202\" width=\"220\" height=\"14\"/></g></g>  <circle cx=\"330\" cy=\"350\" r=\"92\" fill=\"#16467f\"/><circle cx=\"330\" cy=\"350\" r=\"82\" fill=\"#15212c\"/>  <circle cx=\"307.04\" cy=\"318.84\" r=\"9.02\" fill=\"#2a6fbf\"/><circle cx=\"331.64\" cy=\"309\" r=\"9.02\" fill=\"#2a6fbf\"/><circle cx=\"325.9\" cy=\"340.16\" r=\"10.66\" fill=\"#2a6fbf\"/>  <ellipse cx=\"358.7\" cy=\"321.3\" rx=\"16.400000000000002\" ry=\"8.200000000000001\" fill=\"#fff\" opacity=\".18\" transform=\"rotate(-35 358.7 321.3)\"/></svg>";
+const SW_JS=`const C="league-secretary-v1";
+self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.addAll(["app.html","manifest.webmanifest","icon-192.png","icon-512.png"])).catch(()=>{}));});
+self.addEventListener("activate",e=>e.waitUntil(self.clients.claim()));
+self.addEventListener("fetch",e=>{const r=e.request;if(r.method!=="GET"||new URL(r.url).origin!==location.origin)return;
+e.respondWith(fetch(r).then(res=>{if(res.ok){const cp=res.clone();caches.open(C).then(c=>c.put(r,cp));}return res;}).catch(()=>caches.match(r,{ignoreSearch:true})));});
+`;
+function iconPng(size,mask){
+  return new Promise((res,rej)=>{ const img=new Image(); img.onload=()=>{ const c=document.createElement("canvas"); c.width=c.height=size;
+    c.getContext("2d").drawImage(img,0,0,size,size); res(c.toDataURL("image/png").split(",")[1]); }; img.onerror=rej;
+    const svg=mask?ICON_SVG.replace('<rect width="512" height="512" fill="url(#g)"/>','<rect width="512" height="512" fill="url(#g)"/><g transform="translate(38.4 38.4) scale(.85)">').replace("</svg>","</g></svg>"):ICON_SVG;
+    img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg); });
+}
+function setWebStatus(msg,bad){ const el=$("#ghStatus"); if(el){ el.textContent=msg; el.style.color=bad?"var(--pin)":"var(--muted)"; } }
+async function ghTest(s){
+  const r=await gh("",{},s); if(!r.ok) throw new Error(ghErr(r.status));
+  const j=await r.json(); if(j.permissions&&!j.permissions.push) throw new Error(ghErr(403));
+  return j.default_branch||"main";
+}
+async function ghSaveSettings(){
+  const s={...ghSettings(), owner:$("#ghOwner").value.trim().replace(/^@/,""), repo:$("#ghRepo").value.trim(), token:$("#ghToken").value.trim()||ghSettings().token};
+  if(!s.owner||!s.repo||!s.token) return setWebStatus("Fill in your GitHub username, repository name and token.",true);
+  setWebStatus("Checking with GitHub…");
+  try{ s.branch=await ghTest(s); ghStore(s); toast("Connected to GitHub."); render(); }
+  catch(e){ setWebStatus(e.message,true); }
+}
+let publishing=false;
+async function ghPublish(){
+  if(publishing) return; if(!config) return toast("Set up the league first.");
+  const s=ghSettings(); if(!ghReady()) return toast("Connect to GitHub first.");
+  publishing=true; const btn=$("#ghPublish"); if(btn) btn.disabled=true;
+  try{
+    const br=s.branch||"main", stamp=new Date().toLocaleString(), S=compute(), last=S.weeksBowled[S.weeksBowled.length-1];
+    setWebStatus("Publishing standings page…"); await ghPut("index.html",b64(publicPage()),`Update standings ${stamp}`,br);
+    const vman={id:"./",name:config.name,short_name:(n=>{if(n.length<=12)return n;let o="";for(const w of n.split(/\s+/)){if((o+" "+w).trim().length>12)break;o=(o+" "+w).trim();}return o||n.slice(0,12);})(config.name),description:"Standings, averages and high scores",start_url:"./",scope:"./",display:"standalone",background_color:"#1d5aa0",theme_color:"#1d5aa0",
+      icons:[{src:"icon-192.png",sizes:"192x192",type:"image/png",purpose:"any"},{src:"icon-512.png",sizes:"512x512",type:"image/png",purpose:"any"},{src:"icon-maskable-512.png",sizes:"512x512",type:"image/png",purpose:"maskable"}]};
+    await ghPut("viewer.webmanifest",b64(JSON.stringify(vman,null,1)),"Home-screen settings for bowlers",br);
+    if(last){ setWebStatus("Publishing printable recap…"); const pb=recapPdfDoc(last).bytes(); let bin=""; for(let i=0;i<pb.length;i+=0x8000) bin+=String.fromCharCode(...pb.subarray(i,i+0x8000)); await ghPut("recap.pdf",btoa(bin),`Week ${last} recap`,br);
+      setWebStatus("Publishing standings sheet…"); const sb=standingsSheetDoc(last).bytes(); let bin2=""; for(let i=0;i<sb.length;i+=0x8000) bin2+=String.fromCharCode(...sb.subarray(i,i+0x8000)); await ghPut("standings.pdf",btoa(bin2),`Week ${last} standings sheet`,br); }
+    setWebStatus("Saving online backup…"); await ghPut("league-backup.json",b64(backupData()),`Backup ${stamp}`,br);
+    if(s.pwa!==2){ setWebStatus("Setting up the installable app…");
+      const man={id:"app.html",name:"League Secretary",short_name:"League",description:"Bowling league scores, averages and handicaps",start_url:"app.html",scope:"./",display:"standalone",
+        orientation:"any",background_color:"#1d5aa0",theme_color:"#1d5aa0",
+        icons:[{src:"icon-192.png",sizes:"192x192",type:"image/png",purpose:"any"},{src:"icon-512.png",sizes:"512x512",type:"image/png",purpose:"any"},
+               {src:"icon-maskable-512.png",sizes:"512x512",type:"image/png",purpose:"maskable"}]};
+      await ghPut("manifest.webmanifest",b64(JSON.stringify(man,null,1)),"Installable app settings",br);
+      await ghPut("sw.js",b64(SW_JS),"Offline support",br);
+      if(!await ghExists("icon-192.png",br)) await ghPut("icon-192.png",await iconPng(192),"App icon",br);
+      if(!await ghExists("icon-512.png",br)) await ghPut("icon-512.png",await iconPng(512),"App icon",br);
+      await ghPut("icon-maskable-512.png",await iconPng(512,true),"App icon for Android",br);
+      s.pwa=2; s.iconsDone=true; }
+    s.lastPublished=new Date().toISOString(); ghStore(s);
+    toast("Published. The website updates in about a minute."); render();
+  }catch(e){ setWebStatus(e.message||"Publishing stopped. Try again.",true); }
+  finally{ publishing=false; const b=$("#ghPublish"); if(b) b.disabled=false; }
+}
+async function ghRestore(){
+  if(!ghReady()) return toast("Connect to GitHub first.");
+  setWebStatus("Downloading backup from your website…");
+  try{ const s=ghSettings(); const r=await gh(`/contents/league-backup.json?ref=${encodeURIComponent(s.branch||"main")}`);
+    if(r.status===404) return setWebStatus("No online backup yet. It's saved each time you publish.",true);
+    if(!r.ok) throw new Error(ghErr(r.status));
+    const b=JSON.parse(unb64((await r.json()).content));
+    if(!b||!b.config||!Array.isArray(b.weeks)) throw new Error("The online backup couldn't be read.");
+    askRestore(b); setWebStatus("");
+  }catch(e){ setWebStatus(e.message,true); }
+}
+function askRestore(b){
+  pendingRestore=b; const when=b.exportedAt?new Date(b.exportedAt).toLocaleString():"unknown date";
+  const row=$("#restoreRow"); if(!row) return;
+  row.innerHTML=`<span class="confirm">Replace all league data on this device with “${esc(b.config.name||"League")}” from ${esc(when)} (${b.weeks.length} week${b.weeks.length===1?"":"s"})? <button class="btn danger" id="restoreYes">Replace</button><button class="btn ghost" id="restoreNo">Cancel</button></span>`;
+}
+function publicPage(){
+  const S=compute(), wks=S.weeksBowled, last=wks[wks.length-1];
+  const css=document.getElementById("appcss").textContent;
+  const meta=`${config.teamsCount} teams · week ${wks.length} of ${config.weeks} · handicap ${config.hcpPct}% of ${config.hcpBasis}`;
+  const wlabel=w=>`Week ${w}${weeks[w]?.date?" · "+esc(weeks[w].date):""}`;
+  const weekSelect=id=>wks.length?`<select id="${id}" class="wsel" aria-label="Week">${[...wks].reverse().map(w=>`<option value="${w}">${wlabel(w)}</option>`).join("")}</select>`:"";
+  const ind=(X,sw)=>`${topList("High Game · Scratch",X.sg,sw)}${topList("High Series · Scratch",X.ss,sw)}${topList("High Game · Handicap",X.hg,sw)}${topList("High Series · Handicap",X.hs,sw)}`;
+  const tm=(X,sw)=>`${topList("Team High Game · Scratch",X.tsg,sw)}${topList("Team High Series · Scratch",X.tss,sw)}${topList("Team High Game · Handicap",X.thg,sw)}${topList("Team High Series · Handicap",X.ths,sw)}`;
+  const none=`<div class="card empty">No scores yet. Check back after week 1.</div>`;
+  const panels={
+    standings:`<h2 class="vh">Standings</h2>${standings(S)}`,
+    results:wks.length?`<section class="sec"><div class="row"><h2>Weekly Results</h2>${weekSelect("selR")}</div><p class="note">Green totals won that game. Handicaps are each bowler's handicap entering the week.</p>
+      ${wks.map(w=>`<div class="sec" data-group="selR" data-w="${w}" ${w===last?"":"hidden"}>${weekResultsHtml(w)}</div>`).join("")}</section>`:none,
+    averages:bowlers(S),
+    highs:`<section class="sec"><h2>Season Highs</h2><h3>Individual</h3><div class="highs">${ind(S.season,1)}</div><h3>Team</h3><div class="highs">${tm(S.season,1)}</div></section>
+      ${wks.length?`<section class="sec"><div class="row"><h2>Weekly Highs</h2>${weekSelect("selH")}</div>
+      ${wks.map(w=>`<div class="sec" data-group="selH" data-w="${w}" ${w===last?"":"hidden"}><h3>Individual</h3><div class="highs">${ind(S.weekly[w])}</div><h3>Team</h3><div class="highs">${tm(S.weekly[w])}</div></div>`).join("")}
+      <p class="note">Each bowler or team appears once per list. Individual series counts only bowlers who bowled every game; blind scores are left out.</p></section>`:""}`,
+    teams:teamRosters(S,"Team Rosters")
+  };
+  const names={standings:"Standings",results:"Weekly Results",averages:"Averages",highs:"High Scores",teams:"Teams"};
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>${esc(config.name)}</title><meta name="theme-color" media="(prefers-color-scheme: light)" content="#1d5aa0"><meta name="theme-color" media="(prefers-color-scheme: dark)" content="#15365e">
+<link rel="manifest" href="viewer.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="apple-mobile-web-app-title" content="${esc(config.name)}">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>${css}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+nav.tabs a.rc-link{margin-left:auto}
+</style></head><body>
+<header class="band"><div class="wrap"><div class="brand"><h1 class="crest"><span class="wl">${esc(`Welcome to the ${config.season||""}`.trim())}</span><span class="logo">${document.querySelector(".logo").innerHTML}</span><span class="bl">Bowling League</span></h1><span class="meta">${esc(meta)}</span></div>
+<nav class="tabs" role="tablist">${Object.keys(names).map((k,i)=>`<button role="tab" data-tab="${k}" aria-selected="${i===0}">${names[k]}</button>`).join("")}${last?'<a class="rc-link" href="standings.pdf">Standings Sheet (PDF)</a><a href="recap.pdf">Recap (PDF)</a>':""}</nav></div></header>
+<main><div class="wrap">${Object.keys(panels).map((k,i)=>`<div class="sec" role="tabpanel" data-panel="${k}" ${i===0?"":"hidden"}>${panels[k]}</div>`).join("")}
+<p class="note">Updated ${esc(new Date().toLocaleString([], {dateStyle:"medium",timeStyle:"short"}))}. Add this page to your home screen: in Chrome tap ⋮ then Install app; on iPhone tap Share then Add to Home Screen.</p></div></main>
+<script>
+(function(){
+  var tabs=document.querySelectorAll("nav.tabs button[data-tab]"), panels=document.querySelectorAll("[data-panel]");
+  function show(k){ var ok=false; tabs.forEach(function(b){ var on=b.getAttribute("data-tab")===k; if(on) ok=true; b.setAttribute("aria-selected",on); });
+    if(!ok) return show("standings"); panels.forEach(function(p){ p.hidden=p.getAttribute("data-panel")!==k; }); }
+  tabs.forEach(function(b){ b.addEventListener("click",function(){ var k=b.getAttribute("data-tab"); show(k); history.replaceState(null,"","#"+k); window.scrollTo(0,0); }); });
+  document.querySelectorAll("select.wsel").forEach(function(s){ s.addEventListener("change",function(){
+    document.querySelectorAll('[data-group="'+s.id+'"]').forEach(function(d){ d.hidden=d.getAttribute("data-w")!==s.value; }); }); });
+  show((location.hash||"#standings").slice(1));
+  window.addEventListener("hashchange",function(){ show(location.hash.slice(1)); });
+  if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function(){});
+})();
+<\/script></body></html>`;
+}
+function renderWeb(){
+  const s=ghSettings(), url=siteUrl(s), ready=ghReady();
+  const lp=s.lastPublished?new Date(s.lastPublished).toLocaleString([], {dateStyle:"medium",timeStyle:"short"}):"never";
+  $("#view").innerHTML=`<section class="sec"><h2>League Website</h2>
+  ${ready?`<div class="card sec"><h3>Your website</h3><p class="formula" style="word-break:break-all;user-select:all">${esc(url)}</p>
+    <p class="note">Share this address with your bowlers. They can see standings, averages and high scores without signing in to anything. Last published: <b>${esc(lp)}</b>.</p>
+    <div class="row"><button class="btn" id="ghPublish">Publish to website</button><a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener" style="text-decoration:none">Open website</a></div>
+    <p class="note">Publishing also saves an online backup of the whole league. Publish after you save each week.</p></div>`
+   :`<div class="banner">Connect your GitHub account below to publish standings for your bowlers. Follow the setup steps once.</div>`}
+  <p id="ghStatus" class="note" role="status"></p>
+  <div class="grid2">
+   ${srvCard()}
+   <div class="card sec"><h3>GitHub connection</h3><div class="formgrid">
+    <label class="f">GitHub username<input id="ghOwner" autocomplete="off" autocapitalize="off" value="${esc(s.owner||"")}"></label>
+    <label class="f">Repository name<input id="ghRepo" autocomplete="off" autocapitalize="off" value="${esc(s.repo||"league")}"></label>
+    <label class="f" style="grid-column:1/-1">Access token<input id="ghToken" type="password" autocomplete="off" placeholder="${s.token?"Saved. Paste a new one to replace it.":"github_pat_…"}"></label></div>
+    <div class="row"><button class="btn ${ready?"ghost":""}" id="ghSave">${ready?"Update connection":"Connect"}</button>${ready?'<button class="btn danger" id="ghForget">Forget token</button>':""}</div>
+    <p class="note">The token is stored only on this device and can only change this one repository.</p></div>
+   <div class="card sec"><h3>Backups</h3><p class="note">Bring your league over from Claude, or recover it on a new device.</p>
+    <div class="row" id="restoreRow"><button class="btn ghost" id="ghRestore" ${ready?"":"disabled"}>Restore from website backup</button>
+    <label class="btn ghost" style="display:inline-flex;align-items:center">Restore from backup file<input type="file" id="restoreFile" accept=".json,application/json" style="position:absolute;opacity:0;width:1px;height:1px"></label>
+    ${config?'<button class="btn ghost" id="dlBackup">Download backup file</button>':""}</div></div>
+  </div>
+  <details class="card"><summary><b>One-time setup steps</b></summary><ol class="note" style="max-width:none;padding-left:20px;display:flex;flex-direction:column;gap:8px">
+   <li>Create a free account at <b>github.com/signup</b>.</li>
+   <li>Tap <b>+</b> then <b>New repository</b>. Name it <b>league</b>, choose <b>Public</b>, tick <b>Add a README file</b>, and tap <b>Create repository</b>.</li>
+   <li>In the repository, tap <b>Add file</b> then <b>Upload files</b>, choose <b>app.html</b>, and tap <b>Commit changes</b>.</li>
+   <li>Open the repository's <b>Settings</b>, then <b>Pages</b>. Under Branch choose <b>main</b> and <b>/ (root)</b>, then <b>Save</b>.</li>
+   <li>Make a token: your profile picture, <b>Settings</b>, <b>Developer settings</b>, <b>Personal access tokens</b>, <b>Fine-grained tokens</b>, <b>Generate new token</b>. Set expiration to 1 year, choose <b>Only select repositories</b> and pick <b>league</b>, then under Permissions set <b>Contents</b> to <b>Read and write</b>. Generate it and copy the token.</li>
+   <li>On your tablet, open <b>https://YOUR-USERNAME.github.io/league/app.html</b> in Chrome, then menu <b>⋮</b> and <b>Install app</b>. If you only see <b>Add to Home screen</b>, tap it and choose <b>Install</b>, not "Create shortcut". (Publish once first so the app is installable.)</li>
+   <li>In the app, open this <b>Website</b> tab, enter your username, <b>league</b> and the token, and tap <b>Connect</b>. Then restore your Claude backup file and tap <b>Publish to website</b>.</li>
+  </ol></details></section>`;
+}
+
+// ---------- writes ----------
+async function saveConfig(c,msg){
+  if(!db) return toast("Saving isn't available here.");
+  try{ await db.doc("league/config").set(c); toast(msg); }
+  catch(e){ toast("Couldn't save. You may not have edit access, or the connection dropped. Try again."); }
+}
+async function saveWeek(){
+  for(const inp of document.querySelectorAll("input.g.bad")){ inp.focus(); return toast("Scores must be whole numbers from 0 to 300."); }
+  const games={}; for(const pid in draft.games){const e=draft.games[pid]; if(e.abs||e.sub||(e.g||[]).some(v=>v!==""&&v!=null)) games[pid]={abs:!!e.abs,sub:(!e.abs&&e.sub)||null,g:(e.g||[]).map(v=>v===""||v==null?null:Number(v))};}
+  const body={week:entryWeek,date:draft.date||"",matchups:draft.matchups,games,updatedAt:new Date().toISOString()};
+  try{ await db.doc("weeks/w"+String(entryWeek).padStart(2,"0")).set(body); draftDirty=false; toast(`Week ${entryWeek} saved.`); }
+  catch(e){ toast("Couldn't save the week. You may not have edit access, or the connection dropped. Try again."); }
+}
+
+// ---------- events ----------
+$("#tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]"); if(!b) return; if(b.dataset.tab!=="teams") teamsEdit=false; tab=b.dataset.tab; render();});
+document.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.matches("input.g[data-p]")){ const v=t.value.trim(); const ok=v===""||(/^\d{1,3}$/.test(v)&&+v<=300); t.classList.toggle("bad",!ok);
+    const e2=draft.games[t.dataset.p]||(draft.games[t.dataset.p]={g:[]}); e2.g=e2.g||[]; e2.g[+t.dataset.g]=ok&&v!==""?+v:null; draftDirty=true; updateTotals(); }
+  else if(t.id==="edate"){ draft.date=t.value; draftDirty=true; }
+  else if(t.dataset.ml!==undefined){ const m=draft.matchups[+t.dataset.ml]; if(m){ const v=t.value.trim().slice(0,20); if(v) m.lanes=v; else delete m.lanes; draftDirty=true; } }
+  else if(t.id==="s_pct"||t.id==="s_basis") formula();
+});
+document.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.id==="ew"){ entryWeek=+t.value; draft=null; render(); }
+  else if(t.id==="hw"){ highsWeek=+t.value; render(); }
+  else if(t.id==="resw"){ resultsWeek=+t.value; render(); }
+  else if(t.id&&t.id.startsWith("pv_")){ const sw=$("#ps_"+t.id.slice(3)); if(sw){ sw.disabled=t.checked; if(t.checked) sw.value=""; else if(!sw.value){ const S=compute(); const nx=(S.weeksBowled[S.weeksBowled.length-1]||0)+1; if(nx>1) sw.value=nx; } } }
+  else if(t.id==="rw"){ recapWeek=+t.value; render(); }
+  else if(t.id==="restoreFile"&&t.files?.[0]){
+    t.files[0].text().then(txt=>{ let b; try{ b=JSON.parse(txt); }catch(_){ b=null; }
+      if(!b||!b.config||!Array.isArray(b.config.teams)||!Array.isArray(b.weeks)) return toast("That file isn't a League Secretary backup.");
+      askRestore(b); t.value="";
+    }); }
+  else if(t.dataset.abs){ const e2=draft.games[t.dataset.abs]||(draft.games[t.dataset.abs]={g:[]}); e2.abs=t.checked; if(t.checked) e2.sub=null; draftDirty=true; render(); }
+  else if(t.dataset.sub!==undefined){ const e2=draft.games[t.dataset.sub]||(draft.games[t.dataset.sub]={g:[]}); e2.sub=t.value||null; draftDirty=true; render(); }
+  else if(t.dataset.m){ draft.matchups[+t.dataset.m][t.dataset.side]=t.value; draftDirty=true; render(); }
+});
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("button"); if(!t) return;
+  if(t.id==="saveWeek") saveWeek();
+  else if(t.id==="clearWeek"){ $("#saveRow").innerHTML=`<span class="confirm">Delete all scores for week ${entryWeek}? <button class="btn danger" id="clearYes">Delete</button><button class="btn ghost" id="clearNo">Keep</button></span>`; }
+  else if(t.id==="clearNo") render();
+  else if(t.id==="clearYes"){ try{ await db.doc("weeks/w"+String(entryWeek).padStart(2,"0")).delete(); draft=null; toast(`Week ${entryWeek} cleared.`);}catch(_){toast("Couldn't clear the week. Try again.");} }
+  else if(t.id==="saveSettings"){ const isNew=!config; const c=readSettings(); if(isNew) tab="teams"; await saveConfig(c,isNew?"League created.":"Settings saved."); }
+  else if(t.id==="dlRecap") exportRecap();
+  else if(t.id==="dlStand") exportCsv("stand");
+  else if(t.id==="dlAvg") exportCsv("avg");
+  else if(t.id==="dlScores") exportCsv("scores");
+  else if(t.id==="dlBackup") dl(`${slug()}-backup-${new Date().toISOString().slice(0,10)}.json`,backupData());
+  else if(t.id==="restoreYes"&&pendingRestore) doRestore();
+  else if(t.id==="restoreNo"){ pendingRestore=null; render(); }
+  else if(t.id==="ghSave") ghSaveSettings();
+  else if(t.id==="ghPublish") ghPublish();
+  else if(t.id==="ghRestore") ghRestore();
+  else if(t.id==="svSave") srvConnect();
+  else if(t.id==="svForget"){ srvSet({}); srvState=""; srvRev=null; toast("This device is disconnected from the server. The league stays on this device."); render(); }
+  else if(t.id==="ghForget"){ const x=ghSettings(); delete x.token; ghStore(x); toast("Token removed from this device."); render(); }
+  else if(t.dataset.pdf) exportPdf(t.dataset.pdf);
+  else if(t.dataset.print) printReport(t.dataset.print);
+  else if(t.dataset.share) shareReport(t.dataset.share);
+  else if(t.dataset.rep){ reportView=t.dataset.rep; render(); }
+  else if(t.id==="editTeams"){ teamsEdit=true; render(); }
+  else if(t.id==="doneTeams"){ teamsEdit=false; render(); }
+  else if(t.id==="saveTeams"){ await saveConfig(collectTeams(),"Teams saved."); }
+  else if(t.id==="addSub"){ const c=collectTeams(); c.subs.push({id:"s"+Date.now().toString(36),name:`Sub ${c.subs.length+1}`,startAvg:0}); await saveConfig(c,"Sub added. Rename them below."); }
+  else if(t.dataset.mv){ const [tid,j,d]=t.dataset.mv.split("|"); const c=collectTeams(); const ps=c.teams.find(x=>x.id===tid).players; const i=+j, k=i+Number(d);
+    if(k<0||k>=ps.length) return; [ps[i],ps[k]]=[ps[k],ps[i]]; await saveConfig(c,"Bowling order saved."); }
+  else if(t.dataset.rm){ const c=collectTeams(); c.subs=c.subs.filter(s=>s.id!==t.dataset.rm); await saveConfig(c,"Sub removed."); }
+});
+
+// ---------- data (saved on this device) ----------
+const LS="leagueSecretary.data.v1";
+function loadStore(){ try{ const x=JSON.parse(localStorage.getItem(LS)); if(x&&typeof x==="object") return {config:x.config||null,weeks:x.weeks||{}}; }catch(_){} return {config:null,weeks:{}}; }
+let store=loadStore(); const listeners={doc:null,col:null};
+const clone=o=>JSON.parse(JSON.stringify(o));
+const docSnap=()=>({exists:!!store.config,data:()=>clone(store.config),metadata:{fromCache:false}});
+const colSnap=()=>({docs:Object.values(store.weeks).map(w=>({data:()=>clone(w)}))});
+function notify(){ setTimeout(()=>{ listeners.doc&&listeners.doc(docSnap()); listeners.col&&listeners.col(colSnap()); },0); }
+function persist(){ try{ localStorage.setItem(LS,JSON.stringify(store)); }catch(e){ toast("Couldn't save on this device. Download a backup now."); throw e; } }
+const local={
+  doc(path){ const [c,id]=path.split("/"); return {
+    async set(d){ if(srvOn()) await srvWrite("PUT",path,d); if(c==="league") store.config=clone(d); else store.weeks[id]=clone(d); persist(); notify(); },
+    async delete(){ if(srvOn()) await srvWrite("DELETE",path); if(c==="league") store.config=null; else delete store.weeks[id]; persist(); notify(); },
+    onSnapshot(next){ listeners.doc=next; next(docSnap()); return ()=>{}; } }; },
+  collection(){ return { onSnapshot(next){ listeners.col=next; next(colSnap()); return ()=>{}; } }; }
+};
+window.addEventListener("storage",e=>{ if(e.key===LS){ store=loadStore(); notify(); } });
+// ---------- league server (Cloudflare) ----------
+const SK="leagueSecretary.server.v1";
+function srvGet(){ try{ return JSON.parse(localStorage.getItem(SK))||{}; }catch(_){ return {}; } }
+function srvSet(x){ try{ localStorage.setItem(SK,JSON.stringify(x)); }catch(_){} }
+const srvOn=()=>{ const x=srvGet(); return !!(x.url&&x.pw); };
+function srvFetch(path,opts={}){ const x=srvGet();
+  return fetch(x.url+path,{...opts,cache:"no-store",headers:{Authorization:"Bearer "+x.pw,...(opts.body?{"Content-Type":"application/json"}:{})}}); }
+async function srvWrite(method,path,body){ const r=await srvFetch("/api/doc/"+path,{method,body:body===undefined?undefined:JSON.stringify(body)});
+  if(!r.ok){ srvState=r.status===401?"badpw":"offline"; throw new Error("server "+r.status); } }
+let srvRev=null, srvState="";
+// check the server every few seconds so scores sent from the alley show up here
+async function srvPull(force){
+  if(!srvOn()) return;
+  const a=document.activeElement;
+  if(!force&&tab!=="scores"&&a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return;   // don't redraw while someone is typing
+  try{ const r=await fetch(srvGet().url+"/api/league",{cache:"no-store"}); if(!r.ok) throw 0; const j=await r.json();
+    const was=srvState; srvState="ok"; if(was&&was!=="ok"&&tab==="web") render();
+    if(j.rev===srvRev&&!force) return; srvRev=j.rev;
+    if(!j.config) return;
+    const cfgChanged=JSON.stringify(j.config)!==JSON.stringify(store.config);
+    store={config:j.config,weeks:Object.fromEntries((j.weeks||[]).map(w=>["w"+String(w.week).padStart(2,"0"),w]))};
+    try{ localStorage.setItem(LS,JSON.stringify(store)); }catch(_){}
+    setTimeout(()=>{ if(cfgChanged&&listeners.doc) listeners.doc(docSnap()); listeners.col&&listeners.col(colSnap()); },0);
+  }catch(_){ const was=srvState; srvState="offline"; if(was!=="offline"&&tab==="web") render(); }
+}
+setInterval(()=>{ if(document.visibilityState==="visible") srvPull(); },5000);
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") srvPull(); });
+function srvCard(){ const x=srvGet(), on=srvOn();
+  const st=!on?"Not connected. The league is saved only on this device."
+    :srvState==="offline"?"Connected, but the server can't be reached right now. Saving won't work until it's back."
+    :srvState==="badpw"?"The server didn't accept the saved password. Enter it again and tap Update connection."
+    :"Connected. The league is saved on the server, and scores sent from the score sheets appear in Enter Scores automatically.";
+  return `<div class="card sec"><h3>League server</h3><p class="note"><b>${st}</b></p><div class="formgrid">
+    <label class="f" style="grid-column:1/-1">Server address<input id="svUrl" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://fi-league.your-name.workers.dev" value="${esc(x.url||"")}"></label>
+    <label class="f" style="grid-column:1/-1">Secretary password<input id="svPw" type="password" autocomplete="off" placeholder="${x.pw?"Saved. Type a new one to replace it.":""}"></label></div>
+    <div class="row"><button class="btn ${on?"ghost":""}" id="svSave">${on?"Update connection":"Connect"}</button>${on?'<button class="btn danger" id="svForget">Disconnect this device</button>':""}</div>
+    <p class="note">The password is kept only on this device. Score sheets use the league PIN instead, which can only add scores for the match being bowled that night.</p></div>`; }
+async function srvConnect(){
+  const url=($("#svUrl").value||"").trim().replace(/\/+$/,""), old=srvGet(), pw=$("#svPw").value||old.pw;
+  if(!/^https?:\/\/\S+$/.test(url)) return toast("Enter the server address, starting with https://");
+  if(!pw) return toast("Enter the secretary password.");
+  let r; try{ r=await fetch(url+"/api/auth/secretary",{headers:{Authorization:"Bearer "+pw},cache:"no-store"}); }catch(_){ return toast("Couldn't reach the server. Check the address."); }
+  if(r.status===401) return toast("That password isn't right.");
+  if(r.status===429) return toast("Too many wrong tries. Wait 15 minutes.");
+  if(!r.ok){ const j=await r.json().catch(()=>({})); return toast(j.error||`The server isn't set up correctly (${r.status}).`); }
+  srvSet({url,pw}); srvState="ok";
+  let j; try{ j=await (await fetch(url+"/api/league",{cache:"no-store"})).json(); }catch(_){ j={}; }
+  if(!j.config&&store.config){
+    const u=await srvFetch("/api/import",{method:"PUT",body:JSON.stringify({config:store.config,weeks:Object.values(store.weeks)})});
+    if(!u.ok) return toast("Connected, but copying the league to the server failed. Tap Connect again.");
+    toast("Connected. Your league is now saved on the server.");
+  } else toast(j.config?"Connected. Loaded the league from the server.":"Connected.");
+  srvRev=null; await srvPull(true); render();
+}
+
+function start(){
+  db=local; canWrite=true; srvPull(true);
+  try{ navigator.storage?.persist?.().catch(()=>{}); }catch(_){}
+  db.doc("league/config").onSnapshot(s=>{ loaded.config=true; config=s.exists?normalize(s.data()):null; if(tab!=="scores"||!draftDirty) render(); });
+  db.collection("weeks").onSnapshot(s=>{ const w={}; s.docs.forEach(d=>{const x=d.data(); if(x&&x.week) w[x.week]=x;}); weeks=w; loaded.weeks=true;
+    if(tab==="scores"&&draftDirty) return; if(tab==="scores") draft=null; render(); });
+}
+start();
+if("serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
+})();
+</script>
+</body></html>
