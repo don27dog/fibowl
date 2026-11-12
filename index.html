@@ -800,7 +800,6 @@ $('bowlMore').onclick=()=>{ delete S.meta.finished; const done=S.bowlers.every(b
 $('thanksPrint').onclick=()=>$('print').click();
 $('thanksExport').onclick=()=>$('export').click();
 $('exitBtn').onclick=()=>{
-  if(!confirm('Exit and clear the score sheet for the next bowlers?\n\nMake sure you have printed or exported your scores first.')) return;
   closePad();
   S={meta:{center:S.meta.center,event:'Open Bowling',date:today(),lane:'',games:1,cur:0},bowlers:[]}; cur=0; save();
   $('m-event').value='Open Bowling';
