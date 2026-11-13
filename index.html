@@ -611,6 +611,7 @@ function refresh(){
   $('print').style.display=$('export').style.display=noRow?'none':'';
   $('print').parentElement.style.display=noRow?'none':'';
   renderH2H();
+  cntCheck();
 }
 function renderSummary(){
   const th=(ab,fl)=>`<th><span class="ab">${ab}</span><span class="fl">${fl}</span></th>`;
@@ -1255,6 +1256,17 @@ function renderH2H(){ const box=$('h2h');
     const g=R.win[cur], line=g==='t'?`Game ${cur+1} tied at ${x.tot}.`:`${esc(g==='a'?A:B)} win game ${cur+1}, ${Math.max(x.tot,y.tot)}–${Math.min(x.tot,y.tot)}.`;
     $('newGameText').innerHTML=`Game ${cur+1} complete! ${line}`+(result?`<br>${result}.`:''); }
 }
+// ---------- hidden games-bowled counter ----------
+// open bowling: each bowler's finished game counts once (league games are counted from the league's own records)
+function cntCheck(){ if(S.league) return; const m=S.meta; m.cnt=m.cnt||{b:{}}; m.cnt.b=m.cnt.b||{}; let nb=0;
+  S.bowlers.forEach(b=>{ b._cid=b._cid||Math.random().toString(36).slice(2,9);
+    b.games.forEach((x,g)=>{ const k=b._cid+'-'+g; if(x&&gameDone(x)&&!m.cnt.b[k]){ m.cnt.b[k]=1; nb++; } }); });
+  if(nb){ const q=store.get('fibowl_cnt')||[]; q.push({kind:'open',bowler:nb,day:S.meta.date||today()}); store.set('fibowl_cnt',q); save(); cntFlush(); } }
+let cntBusy=false;
+async function cntFlush(){ if(cntBusy||!LEAGUE_API) return; const q=store.get('fibowl_cnt')||[]; if(!q.length) return; cntBusy=true;
+  try{ while(q.length){ const r=await fetch(LEAGUE_API+'/api/count',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(q[0]),cache:'no-store'}); if(!r.ok) break; q.shift(); store.set('fibowl_cnt',q); } }catch(e){}
+  cntBusy=false; }
+window.addEventListener('online',cntFlush); setTimeout(cntFlush,3000);
 function lgPayload(){ const L=S.league; if(!L||!L.teams.a.id) return null; const K=L.K, entries={};
   ['a','b'].forEach(sd=>L.teams[sd].fixed.forEach(f=>{ if(f.kind==='abs'&&f.slot) entries[f.slot]={abs:true,sub:null,g:[]}; else if(f.kind==='vac'&&f.slot) entries[f.slot]={abs:false,sub:null,g:[]}; }));
   S.bowlers.forEach(b=>{ if(!b.slot||!b.team) return;
