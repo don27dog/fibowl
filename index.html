@@ -868,15 +868,70 @@ let lastStyle=-1;
 function strikeRun(btn){ const {b,g,f,k}=btn.dataset, game=S.bowlers[b].games[g]; let run=0;
   for(let fi=0;fi<=+f;fi++){ const fr=game[fi]; for(let j=0;j<fr.length;j++){ if(fi===+f&&j>+k) break; const c=fr[j]; if(c==='') continue; run=c==='X'?run+1:0; } }
   return run; }
-function turkeyFx(btn,run){
-  const big=run>=9?'TRIPLE TURKEY!':run>=6?'DOUBLE TURKEY!':'TURKEY!';
-  crashAt(0,10); gobble(0.5); gobble(1.15); [[523,1.8],[659,1.92],[784,2.04],[1047,2.16]].forEach(([f,w])=>tone(f,w===2.16?0.6:0.12,0.12,'square',w));
-  buzz([40,40,40,40,120]);
-  if(!animOn) return; const P=fxSpot(btn);
-  const b=document.createElement('div'); b.className='fxBanner'; b.style.height='64px'; b.style.marginTop='-32px'; b.style.flexDirection='column'; b.style.color='#7a3d00'; b.style.background='rgba(255,236,190,.96)'; b.style.fontSize=run>=6?'21px':'30px'; b.style.whiteSpace='nowrap';
-  b.innerHTML=`<span>🦃 ${big} 🦃</span><small>${run} strikes in a row</small>`; P.L.appendChild(b);
-  anim(b,[{transform:'scale(.2)',opacity:0},{transform:'scale(1.08)',opacity:1,offset:.15},{transform:'scale(1)',opacity:1,offset:.85},{opacity:0}],{duration:2600,easing:'ease-out'});
-  confetti(P.L,40,P.w,P.h); }
+// ---------- strikes in a row: a different celebration for each run from 2 to 11 ----------
+function streakBanner(P,emoji,word,sub,fg,bg,dur){
+  const b=document.createElement('div'); b.className='fxBanner'; b.style.height='64px'; b.style.marginTop='-32px'; b.style.flexDirection='column';
+  b.style.color=fg; b.style.background=bg; b.style.whiteSpace='nowrap'; b.style.zIndex='3';
+  const len=(word+emoji+emoji).length; b.style.fontSize=(len>16?20:len>12?24:30)+'px';
+  b.innerHTML=`<span>${emoji?emoji+' ':''}${word}${emoji?' '+emoji:''}</span><small>${sub}</small>`; P.L.appendChild(b);
+  anim(b,[{transform:'scale(.2)',opacity:0},{transform:'scale(1.08)',opacity:1,offset:.15},{transform:'scale(1)',opacity:1,offset:.85},{opacity:0}],{duration:dur||2600,easing:'ease-out'});
+  return b; }
+function firework(P,x,y,col,delay){ for(let i=0;i<14;i++){ const d=document.createElement('div'); d.className='fxConf'; d.style.width=d.style.height='6px'; d.style.borderRadius='50%'; d.style.background=col; d.style.left=(x-3)+'px'; d.style.top=(y-3)+'px'; d.style.opacity='0'; P.L.appendChild(d);
+  const a=i/14*Math.PI*2, r=36+Math.random()*18; anim(d,[{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${Math.cos(a)*r}px,${Math.sin(a)*r}px) scale(.4)`,opacity:0}],{delay,duration:800,easing:'cubic-bezier(.2,.8,.4,1)'}); } }
+function rollBall(P,y,delay,size){ const b=document.createElement('div'); b.className='fxBall'; b.style.width=b.style.height=(size||22)+'px'; b.style.top=(y-(size||22)/2)+'px'; b.style.left='-34px'; P.L.appendChild(b);
+  anim(b,[{transform:'translateX(0) rotate(0)'},{transform:`translateX(${P.w+70}px) rotate(900deg)`}],{delay,duration:900,easing:'ease-in'}); }
+function dropRoll(n,when,len){ for(let i=0;i<n;i++) noiseBurst(when+i*len/n,0.05,0.25+i/n*0.3,'bandpass',300+Math.random()*200,1.5); }
+const sub=n=>n+' strikes in a row';
+const STREAK={
+  2:(btn)=>{ crashAt(0,10); crashAt(0.28,7); tone(988,0.15,0.1,'square',0.55); tone(1319,0.25,0.1,'square',0.68);
+    if(!animOn) return; const P=fxSpot(btn);
+    ['X','X'].forEach((t,i)=>{ const w=document.createElement('div'); w.className='fxWord'; w.textContent=t; w.style.color='#e8590c'; w.style.fontSize='34px'; w.style.left=(P.w/2-34+i*40)+'px'; w.style.top=(P.h/2-48)+'px'; P.L.appendChild(w);
+      anim(w,[{transform:'scale(3) rotate(-20deg)',opacity:0},{transform:'scale(1) rotate(0)',opacity:1,offset:.25},{opacity:1,offset:.8},{opacity:0}],{delay:i*220,duration:1700,easing:'ease-out'}); });
+    streakBanner(P,'','DOUBLE!',sub(2),'#a83a06','rgba(255,232,214,.95)',1900).style.marginTop='0'; },
+  3:(btn)=>{ crashAt(0,10); gobble(0.5); gobble(1.15); [[523,1.8],[659,1.92],[784,2.04],[1047,2.16]].forEach(([f,w])=>tone(f,w===2.16?0.6:0.12,0.12,'square',w));
+    if(!animOn) return; const P=fxSpot(btn); streakBanner(P,'🦃','TURKEY!',sub(3),'#7a3d00','rgba(255,236,190,.96)'); confetti(P.L,40,P.w,P.h); },
+  4:(btn)=>{ crashAt(0,10); [0.15,0.45,0.75,1.05].forEach((w,i)=>{ noiseBurst(w,0.45,0.35,'lowpass',170,1); tone(523*Math.pow(1.26,i),0.18,0.1,'triangle',w+0.35); }); crashAt(1.45,10);
+    if(!animOn) return; const P=fxSpot(btn); [0,1,2,3].forEach(i=>rollBall(P,14+i*(P.h-28)/3,i*300,20)); streakBanner(P,'🎳','FOUR BAGGER!',sub(4),'#26215c','rgba(238,237,254,.96)',2800); },
+  5:(btn)=>{ crashAt(0,10); [523,659,784,988,1319].forEach((f,i)=>tone(f,0.25,0.1,'triangle',0.3+i*0.11)); [1568,2093].forEach((f,i)=>tone(f,0.9,0.05,'sine',0.9+i*0.1));
+    if(!animOn) return; const P=fxSpot(btn);
+    for(let k=0;k<5;k++){ const cx=P.w*(0.12+k*0.19), cy=P.h*(k%2?0.7:0.3);
+      for(let i=0;i<6;i++){ const p=document.createElement('div'); p.className='fxPin'; p.style.left=(cx-4)+'px'; p.style.top=(cy-8)+'px'; p.style.opacity='0'; P.L.appendChild(p);
+        const a=Math.random()*Math.PI*2, d=30+Math.random()*30; anim(p,[{transform:'rotate(0)',opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) rotate(${Math.random()*540}deg)`,opacity:0}],{delay:k*150,duration:800,easing:'ease-out'}); } }
+    streakBanner(P,'🖐️','FIVE BAGGER!',sub(5),'#0b4f1e','rgba(211,249,216,.96)',2800); },
+  6:(btn)=>{ crashAt(0,10); for(let i=0;i<6;i++){ noiseBurst(0.35+i*0.13,0.06,0.5,'highpass',2500,0.8); tone(700+i*60,0.06,0.06,'sine',0.35+i*0.13); } [392,494,587,784].forEach(f=>tone(f,0.7,0.06,'square',1.2));
+    if(!animOn) return; const P=fxSpot(btn);
+    for(let i=0;i<6;i++){ const p=document.createElement('div'); p.className='fxPin'; p.style.width='12px'; p.style.height='24px'; p.style.borderColor='#d6336c';
+      p.style.left=(P.w/2-40+(i%3)*30)+'px'; p.style.top=(P.h/2-56+Math.floor(i/2)*0)+(i<3?0:28)+'px'; p.style.opacity='0'; P.L.appendChild(p);
+      anim(p,[{transform:'translateY(-30px)',opacity:0},{transform:'translateY(0)',opacity:1,offset:.2},{transform:'translateY(-6px)',offset:.3},{transform:'translateY(0)',opacity:1,offset:.4},{opacity:1,offset:.85},{opacity:0}],{delay:i*120,duration:2200}); }
+    streakBanner(P,'💪','SIX PACK!',sub(6),'#8f1d47','rgba(255,222,235,.96)',2800).style.top='72%'; },
+  7:(btn)=>{ crashAt(0,10); for(let i=0;i<7;i++) tone(660+i*90,0.08,0.09,'square',0.3+i*0.11); tone(1568,1,0.07,'sine',1.15); tone(2093,1,0.05,'sine',1.2);
+    if(!animOn) return; const P=fxSpot(btn), bulbs=[], per=2*(P.w+P.h), N=Math.max(24,Math.floor(per/18));
+    for(let i=0;i<N;i++){ let d=i/N*per, x,y; if(d<P.w){x=d;y=4;} else if(d<P.w+P.h){x=P.w-8;y=d-P.w;} else if(d<2*P.w+P.h){x=P.w-(d-P.w-P.h);y=P.h-8;} else {x=4;y=P.h-(d-2*P.w-P.h);}
+      const b=document.createElement('div'); b.className='fxBulb'; b.style.left=x+'px'; b.style.top=y+'px'; P.L.appendChild(b); bulbs.push(b); }
+    let k=0; const iv=setInterval(()=>{ bulbs.forEach((b,i)=>b.classList.toggle('on',(i+k)%4===0)); k++; },80); setTimeout(()=>{ clearInterval(iv); bulbs.forEach(b=>b.remove()); },2700);
+    streakBanner(P,'🎰','SEVEN BAGGER!',sub(7),'#7a4a00','rgba(255,243,191,.96)',2800); },
+  8:(btn)=>{ crashAt(0,10); [0.2,0.7,1.2].forEach(w=>{ glide(300,1600,0.4,0.08,'sine',w); noiseBurst(w+0.42,0.4,0.6,'lowpass',500,0.8); clack(w+0.5,0.3,3000,0.3); });
+    if(!animOn) return; const P=fxSpot(btn); [[.2,.3,'#f59f00'],[.75,.35,'#d6336c'],[.5,.7,'#1971c2'],[.3,.75,'#2f9e44'],[.85,.75,'#7048e8']].forEach(([x,y,c],i)=>firework(P,P.w*x,P.h*y,c,300+i*280));
+    streakBanner(P,'🎆','EIGHT BAGGER!',sub(8),'#fff','rgba(26,32,64,.92)',3000); },
+  9:(btn)=>{ crashAt(0,10); glide(260,2100,1.1,0.08,'triangle',0.3); [523,659,784,1047,1319].forEach(f=>tone(f,1,0.05,'triangle',1.4));
+    if(!animOn) return; const P=fxSpot(btn);
+    const r=document.createElement('div'); r.style.cssText='position:absolute;left:0;right:0;top:0;bottom:0;background:linear-gradient(90deg,#ff6b6b,#ffd43b,#69db7c,#4dabf7,#9775fa,#f783ac);opacity:.0'; P.L.appendChild(r);
+    anim(r,[{transform:'translateX(-100%)',opacity:.55},{transform:'translateX(0)',opacity:.55,offset:.3},{opacity:.4,offset:.8},{opacity:0}],{duration:2600,easing:'ease-out'});
+    confetti(P.L,60,P.w,P.h); streakBanner(P,'🌈','NINE BAGGER!',sub(9),'#3c2a7a','rgba(255,255,255,.93)',3000); },
+  10:(btn)=>{ crashAt(0,10); crashAt(0.35,10); [[523,0.7],[523,0.82],[523,0.94],[698,1.06],[880,1.3],[1047,1.5]].forEach(([f,w])=>tone(f,w===1.5?0.8:0.11,0.12,'square',w));
+    if(!animOn) return; const P=fxSpot(btn);
+    anim(P.card,[{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}],{duration:450,fill:'none'});
+    for(let i=0;i<22;i++){ const p=document.createElement('div'); p.className='fxPin'; p.style.borderColor='#f59f00'; p.style.left=(Math.random()*P.w)+'px'; p.style.top='-20px'; P.L.appendChild(p);
+      anim(p,[{transform:'translateY(0) rotate(0)'},{transform:`translateY(${P.h+40}px) rotate(${Math.random()*720-360}deg)`}],{delay:Math.random()*900,duration:1100+Math.random()*600,easing:'ease-in'}); }
+    streakBanner(P,'🏆','TEN BAGGER!',sub(10),'#6b4a00','linear-gradient(90deg,rgba(255,224,102,.97),rgba(255,243,191,.97),rgba(255,224,102,.97))',3200); },
+  11:(btn)=>{ dropRoll(28,0,1.4); tone(220,1.4,0.06,'sawtooth',0); glide(220,880,1.4,0.05,'square',0); [1.6,2.0,2.4].forEach(w=>{ tone(70,0.18,0.4,'sine',w); tone(70,0.14,0.3,'sine',w+0.2); });
+    if(!animOn) return; const P=fxSpot(btn);
+    const dim=document.createElement('div'); dim.style.cssText='position:absolute;inset:0;background:rgba(10,16,40,.78)'; P.L.appendChild(dim);
+    anim(dim,[{opacity:0},{opacity:1,offset:.1},{opacity:1,offset:.9},{opacity:0}],{duration:3200});
+    const b=streakBanner(P,'🔥',"LET'S GO ONE MORE!",'11 strikes in a row. One more for 300!','#ffd43b','transparent',3200);
+    const t=b.firstElementChild; anim(t,[{transform:'scale(1)'},{transform:'scale(1.12)'},{transform:'scale(1)'}],{duration:400,delay:1500,iterations:4,fill:'none'}); }
+};
+function streakFx(btn,run){ buzz(run>=10?[60,50,60,50,60,50,200]:[40,40,40,40,120]); STREAK[run](btn); }
 function perfectFx(){
   crashAt(0,10); crashAt(0.4,10);
   [[392,0.7],[523,0.85],[659,1],[784,1.15],[659,1.4],[784,1.55],[1047,1.75]].forEach(([f,w])=>tone(f,w===1.75?1.2:0.14,0.13,'square',w));
@@ -890,7 +945,7 @@ function markFx(btn,ch){
   const st=ch==='X';
   if(st){ const {b,g}=btn.dataset, game=S.bowlers[b].games[g];
     if(gameDone(game)&&gameTotal(game)===300){ perfectFx(); return; }
-    const run=strikeRun(btn); if(run>=3&&run%3===0){ turkeyFx(btn,run); return; } }
+    const run=strikeRun(btn); if(STREAK[run]){ streakFx(btn,run); return; } }
   buzz(st?[30,40,70]:[25,30,25]);
   let i; do{ i=Math.floor(Math.random()*STYLES.length); }while(i===lastStyle&&STYLES.length>1); lastStyle=i;
   STYLES[i](btn,st);
