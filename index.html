@@ -1082,10 +1082,30 @@ const lgFileLink='<label class="lgFile">Load a league file instead<input type="f
 function openLeague(){
   closePad(); if(!$('addPanel').hidden) closeAdd();
   const P=$('leaguePanel'); P.hidden=false; $('leagueBtn').hidden=true; $('addBowler').hidden=true; refresh();
-  P.innerHTML='<h2>League Bowlers</h2><p class="lgName">Loading the league…</p>';
   P.scrollIntoView({block:'start',behavior:'smooth'});
-  lgFetch().then(rec=>{ if(rec) lgSetup(rec); else LG=null; renderLeaguePanel(); });
+  // nothing about the league is shown until the PIN has been checked by the league server
+  lgGate=null; if(LEAGUE_API){ renderPinGate(''); return; }
+  loadLeagueSetup();
 }
+let lgGate=null;
+function renderPinGate(err){ const P=$('leaguePanel');
+  P.innerHTML=`<h2>League Bowlers</h2><p class="lgName">Enter the league PIN to continue.</p>
+    <label>League PIN<input id="gatePin" type="password" inputmode="numeric" autocomplete="off"></label>
+    ${err?`<p class="lgErr">${err}</p>`:''}
+    <div class="addBtns"><button id="lgCancel">Cancel</button><button class="primary" id="gateGo">Continue</button></div>
+    <p class="lgNote">Ask the league secretary for the PIN.</p>`;
+  $('lgCancel').onclick=cancelLeague; $('gateGo').onclick=gateCheck;
+  $('gatePin').onkeydown=e=>{ if(e.key==='Enter') gateCheck(); }; setTimeout(()=>{ const i=$('gatePin'); if(i) i.focus(); },50); }
+async function gateCheck(){ const pin=(($('gatePin')&&$('gatePin').value)||'').trim();
+  if(!pin) return renderPinGate('Enter the league PIN.');
+  $('gateGo').disabled=true; $('gateGo').textContent='Checking…'; let msg='';
+  try{ const r=await fetch(LEAGUE_API+'/api/auth/pin',{headers:{'X-League-Pin':pin},cache:'no-store'});
+    if(r.ok){ lgGate=pin; loadLeagueSetup(); return; }
+    msg=r.status===401?'That PIN isn’t right. Check it with the league secretary.':r.status===429?'Too many wrong PINs. Wait 15 minutes and try again.':'The league server couldn’t check the PIN. Try again.'; }
+  catch(e){ msg='Can’t check the PIN: no connection to the league server. Check the Wi-Fi and try again.'; }
+  if(!$('leaguePanel').hidden) renderPinGate(msg); }
+function loadLeagueSetup(){ const P=$('leaguePanel'); P.innerHTML='<h2>League Bowlers</h2><p class="lgName">Loading the league…</p>';
+  lgFetch().then(rec=>{ if(rec) lgSetup(rec); else LG=null; renderLeaguePanel(); }); }
 function closeLeague(){ $('leaguePanel').hidden=true; $('leaguePanel').innerHTML=''; $('addBowler').hidden=false; LG=null; refresh(); }
 function cancelLeague(){ const was=!!S.league; closeLeague(); if(!was&&S.meta.event==='League'){ S.meta.event='Open Bowling'; $('m-event').value='Open Bowling'; save(); refresh(); } }
 function renderLeaguePanel(){
@@ -1114,7 +1134,7 @@ function renderLeaguePanel(){
       <p class="lgNote">${LG.mine&&LG.mine!=='both'?`The other team's phone scores ${esc(lgTeam(d,LG[LG.mine==='a'?'b':'a']).name)}. Both phones show the whole match.`:'Using two phones? Each picks its own team here.'}</p>`:''}
     ${['a','b'].map(sd=>!LG.mine||LG.mine==='both'||LG.mine===sd?team(sd):`<div class="lgTeam t${sd.toUpperCase()}" style="--tc:${lgColor(d,LG[sd])}"><h3>${esc(lgTeam(d,LG[sd]).name)}</h3><p class="lgNote" style="margin:0">Scored on the other phone, which also sets this team's absences and subs.</p></div>`).join('')}
     <p class="lgNote">Set anyone who isn't here to Absent (blind score of average − ${K.pen}) or pick a sub. Handicap is ${K.pct}% of ${K.basis} minus average.</p>
-    ${LEAGUE_API?`<label style="margin-top:10px">League PIN<input id="lgPin" type="password" inputmode="numeric" autocomplete="off" value="${esc(LG.pin||'')}"></label><p class="lgNote">Needed every time League Bowlers is opened. Scores then go to the league secretary automatically after each game. Ask the secretary for the PIN.</p>`:''}
+
     ${LG.err?`<p class="lgErr">${LG.err}</p>`:''}
     <div class="addBtns"><button id="lgCancel">Cancel</button><button class="primary" id="lgGo">Start league night</button></div>
     <p class="lgNote">${lgSource()} ${lgFileLink}</p>`;
@@ -1151,10 +1171,7 @@ async function lgCheckPin(pin){
   return ''; }   // no connection: keep the PIN and try it when sending
 async function startLeague(){
   // the league PIN is asked for every time, and kept only for this league night (never remembered on the phone)
-  if(LEAGUE_API){ const pin=(($('lgPin')&&$('lgPin').value)||'').trim(); LG.pin=pin;
-    if(!pin){ LG.err='Enter the league PIN to start.'; renderLeaguePanel(); return; }
-    $('lgGo').disabled=true; const bad=await lgCheckPin(pin); if(!LG) return;
-    if(bad){ LG.pin=''; LG.err=bad; renderLeaguePanel(); return; } }
+  if(LEAGUE_API){ if(!lgGate){ openLeague(); return; } LG.pin=lgGate; }
   if(LG.a===LG.b){ LG.err='Pick two different teams.'; renderLeaguePanel(); return; }
   if(LEAGUE_API&&!LG.mine){ LG.err='Pick which team this phone is scoring.'; renderLeaguePanel(); return; }
   const mine=LEAGUE_API?LG.mine:'both', mineHas=sd=>mine==='both'||mine===sd;
