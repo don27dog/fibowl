@@ -531,7 +531,7 @@ function sheetTable(g, forPrint){
   const box=document.createElement('div');
   S.bowlers.forEach((b,bi)=>{
     const card=document.createElement('div'); const lt=S.league&&b.team&&S.league.teams[b.team];
-    card.className='bw'+(lt?' t'+b.team.toUpperCase():'');
+    card.className='bw'+(lt?' t'+b.team.toUpperCase():''); if(lt&&lt.color) card.style.setProperty('--tc',lt.color);
     let html=`<div class="bw-h"><input class="nm" data-name="${bi}" placeholder="Bowler ${bi+1}">`+(lt?`<span class="tmTag">${esc(lt.name)}${b.subFor?' · sub':''}</span>`:'')+`<span class="hdl">Hdcp</span><input class="hd" data-hd="${bi}" inputmode="numeric">`;
     if(!forPrint) html+=`<button class="del no-print" title="Remove bowler" data-del="${bi}">×</button>`;
     html+='</div><div class="frames">';
@@ -719,6 +719,7 @@ function openPad(btn){
   const pad=$('keypad'); pad.classList.add('open'); updateStartHint();
   // in league play the keypad's border takes the colour of the team being scored
   const bw=btn.closest('.bw'); pad.classList.toggle('tA',!!bw&&bw.classList.contains('tA')); pad.classList.toggle('tB',!!bw&&bw.classList.contains('tB'));
+  const tcol=bw&&S.league&&bw.style.getPropertyValue('--tc'); pad.style.borderColor=tcol||'';
   updatePad(btn);
   // place the keypad just below the whole scorecard of the bowler who is up
   const card=btn.closest('.bw').getBoundingClientRect();
@@ -1058,6 +1059,9 @@ function lgRoundRobin(ids,wi){ ids=ids.slice(); if(ids.length%2) ids.push(null);
 function lgMatchups(d,w){ const wk=(d.weeks||[]).find(x=>x.week===w); const ids=d.config.teams.map(t=>t.id);
   return ((wk&&wk.matchups)||lgRoundRobin(ids,w-1)).filter(m=>m.a&&m.b&&ids.includes(m.a)&&ids.includes(m.b)); }
 const lgTeam=(d,id)=>d.config.teams.find(t=>t.id===id);
+const LG_COLORS=["#1f5fbf","#d9480f","#2f9e44","#7048e8","#c2255c","#0c8599","#e67700","#5c940d","#9c36b5","#495057","#1864ab","#a61e4d"];
+function lgColor(d,id){ const i=d.config.teams.findIndex(t=>t.id===id), t=d.config.teams[i]; return (t&&t.color)||LG_COLORS[(i<0?0:i)%LG_COLORS.length]; }
+const sideColor=sd=>(S.league&&S.league.teams[sd]&&S.league.teams[sd].color)||(sd==='b'?'#d9480f':'#1f5fbf');
 // lanes for a match, same rule as the League Secretary: that week's lanes, or the league's usual lanes (rotated weekly if chosen)
 function lgLanes(d,w,a,b){ const ms=lgMatchups(d,w), mi=ms.findIndex(m=>(m.a===a&&m.b===b)||(m.a===b&&m.b===a)); if(mi<0) return '';
   if(ms[mi].lanes) return ms[mi].lanes; const c=d.config, n=Math.floor((c.teams.length)/2), list=(c.matchLanes||[]).slice(0,n);
@@ -1099,14 +1103,14 @@ function renderLeaguePanel(){
       const who=ch==='bowl'||ch==='abs'?LG.st[p.id]:LG.st[ch], e=lgEst(who,[],K);
       const info=ch==='abs'?`Absent · blind ${Math.max(0,e.avg-K.pen)} + ${e.hcp} hdcp`:(ch==='bowl'?'':esc(who.name)+' subbing · ')+`Avg ${e.avg||'—'}${e.est&&who.n<3?' (starting)':''} · Hdcp ${e.hcp}`;
       return `<div class="lgRow${ch==='abs'?' off':''}"><div>${vac?'Vacant spot':esc(p.name)}<small>${info}</small></div><select data-line="${p.id}" aria-label="${vac?'Vacant spot':esc(p.name)}">${opts}</select></div>`; }).join('');
-    return `<div class="lgTeam t${side.toUpperCase()}"><h3>${esc(t.name)}</h3>${rows}</div>`; };
+    return `<div class="lgTeam t${side.toUpperCase()}" style="--tc:${lgColor(d,t.id)}"><h3>${esc(t.name)}</h3>${rows}</div>`; };
   P.innerHTML=`<h2>League Bowlers</h2><p class="lgName">${esc(c.name||'League')}${c.season?' · '+esc(c.season):''}</p>
     <label>Week<select id="lgWeek">${Array.from({length:K.weeks},(_,i)=>`<option value="${i+1}"${i+1===w?' selected':''}>Week ${i+1}</option>`).join('')}</select></label>
     ${ms.length?`<div class="lgLab">Week ${w} matches. Tap the one you're scoring.</div><div class="chips">${ms.map((m,i)=>`<button class="chip${m.a===LG.a&&m.b===LG.b?' on':''}" data-m="${i}">${esc(lgTeam(d,m.a).name)} vs ${esc(lgTeam(d,m.b).name)}${lgLanes(d,w,m.a,m.b)?`<small style="display:block;font-weight:400;font-size:11px">Lanes ${esc(lgLanes(d,w,m.a,m.b))}</small>`:''}</button>`).join('')}</div>`:''}
     <div class="lgPick"><label>Team<select id="lgA">${opt(LG.a)}</select></label><span>vs</span><label>Team<select id="lgB">${opt(LG.b)}</select></label></div>
     ${LEAGUE_API?`<div class="lgLab">This phone is scoring</div><div class="chips">${['a','b'].map(sd=>`<button class="chip${LG.mine===sd?' on':''}" data-mine="${sd}">${esc(lgTeam(d,LG[sd]).name)}</button>`).join('')}<button class="chip${LG.mine==='both'?' on':''}" data-mine="both">Both teams</button></div>
       <p class="lgNote">${LG.mine&&LG.mine!=='both'?`The other team's phone scores ${esc(lgTeam(d,LG[LG.mine==='a'?'b':'a']).name)}. Both phones show the whole match.`:'Using two phones? Each picks its own team here.'}</p>`:''}
-    ${['a','b'].map(sd=>!LG.mine||LG.mine==='both'||LG.mine===sd?team(sd):`<div class="lgTeam t${sd.toUpperCase()}"><h3>${esc(lgTeam(d,LG[sd]).name)}</h3><p class="lgNote" style="margin:0">Scored on the other phone, which also sets this team's absences and subs.</p></div>`).join('')}
+    ${['a','b'].map(sd=>!LG.mine||LG.mine==='both'||LG.mine===sd?team(sd):`<div class="lgTeam t${sd.toUpperCase()}" style="--tc:${lgColor(d,LG[sd])}"><h3>${esc(lgTeam(d,LG[sd]).name)}</h3><p class="lgNote" style="margin:0">Scored on the other phone, which also sets this team's absences and subs.</p></div>`).join('')}
     <p class="lgNote">Set anyone who isn't here to Absent (blind score of average − ${K.pen}) or pick a sub. Handicap is ${K.pct}% of ${K.basis} minus average.</p>
     ${LEAGUE_API&&!store.get('fibowl_pin')?`<label style="margin-top:10px">League PIN (asked once on this phone)<input id="lgPin" inputmode="numeric" autocomplete="off" value="${esc(LG.pin||'')}"></label><p class="lgNote">With the PIN, scores go to the league secretary automatically after each game. Ask the secretary for it.</p>`:''}
     ${LG.err?`<p class="lgErr">${LG.err}</p>`:''}
@@ -1154,14 +1158,14 @@ async function startLeague(){
   if(S.bowlers.some(b=>b.games.some(gameStarted)) && !confirm('Start a league sheet? This clears the scores on the current sheet, so print or export them first if you need them.')) return;
   const {d,K,w}=LG, bowlers=[], teams={};
   ['a','b'].forEach(side=>{ const t=lgTeam(d,LG[side]), fixed=[];
-    if(!mineHas(side)){ teams[side]={id:t.id,name:t.name,fixed,remote:true,roster:t.players.map(p=>({id:p.id,vac:lgIsVac(p,w)}))}; return; }
+    if(!mineHas(side)){ teams[side]={id:t.id,name:t.name,color:lgColor(d,t.id),fixed,remote:true,roster:t.players.map(p=>({id:p.id,vac:lgIsVac(p,w)}))}; return; }
     t.players.forEach(p=>{
       const ch=LG.line[p.id]||(lgIsVac(p,w)?'vac':'bowl');
       if(ch==='vac'){ const sc=Math.min(K.vac,K.basis); fixed.push({name:'Vacant',kind:'vac',slot:p.id,score:sc,hcp:Math.max(0,K.basis-sc)}); return; }
       if(ch==='abs'){ const e=lgEst(LG.st[p.id],[],K); fixed.push({name:p.name,kind:'abs',slot:p.id,score:Math.max(0,e.avg-K.pen),hcp:e.hcp}); return; }
       const who=ch==='bowl'?LG.st[p.id]:LG.st[ch], e=lgEst(who,[],K);
       bowlers.push({name:who.name,hdcp:e.hcp,games:[],team:side,slot:p.id,subId:ch==='bowl'?null:ch,subFor:ch==='bowl'?null:p.name,lg:{pins:who.pins,n:who.n,start:who.start}}); });
-    teams[side]={id:t.id,name:t.name,fixed}; });
+    teams[side]={id:t.id,name:t.name,color:lgColor(d,t.id),fixed}; });
   // averages for the other team and the subs, to work out handicaps for scores from the other phone
   const st={}; ['a','b'].forEach(sd=>{ if(!mineHas(sd)) lgTeam(d,LG[sd]).players.forEach(p=>{ st[p.id]=LG.st[p.id]; }); }); (d.config.subs||[]).forEach(x=>{ st[x.id]=LG.st[x.id]; });
   const lineVals=Object.values(LG.line), newSubs=(LG.rec.newSubs||[]).filter(x=>lineVals.includes(x.id));
@@ -1224,7 +1228,7 @@ function renderH2H(){ const box=$('h2h');
   box.hidden=false; const L=S.league, K=L.K, R=lgResult();
   const row=sd=>{ const X=R[sd];
     const cell=(x,won,part)=>x.show?`<td class="${won?'win':''}${part?' part':''}"><b>${x.tot}</b><small${part&&x.thru!==undefined?' class="thru"':''}>${part&&x.thru!==undefined?(x.thru?'thru frame '+x.thru:'frame 1'):x.scr+' scr'}</small></td>`:'<td></td>';
-    return `<tr class="t${sd.toUpperCase()}"><td>${esc(X.T.name)}${L.mine===sd?'<small>this phone</small>':X.remote?'<small>other phone</small>':''}</td>`+X.games.map((x,g)=>cell(x,R.win[g]===sd,!x.done)).join('')+
+    return `<tr class="t${sd.toUpperCase()}" style="--tc:${sideColor(sd)}"><td>${esc(X.T.name)}${L.mine===sd?'<small>this phone</small>':X.remote?'<small>other phone</small>':''}</td>`+X.games.map((x,g)=>cell(x,R.win[g]===sd,!x.done)).join('')+
       cell({show:X.games.some(x=>x.show),tot:X.ser,scr:X.serScr},R.sw===sd,!X.allDone)+`<td class="pts"><b>${lgPts(R.pts[sd])}</b></td></tr>`; };
   const fixedNote=['a','b'].map(sd=>R[sd].T.fixed.map(f=>`${esc(f.name)}${f.kind==='abs'?' (absent)':''} ${f.score}`).join(', ')).filter(Boolean);
   const A=R.a.T.name, B=R.b.T.name;
@@ -1256,7 +1260,9 @@ function lgPayload(){ const L=S.league; if(!L||!L.teams.a.id) return null; const
   S.bowlers.forEach(b=>{ if(!b.slot||!b.team) return;
     const live=Array.from({length:K.G},(_,g)=>{ const x=b.games[g]; return x&&gameStarted(x)&&!gameDone(x)?{s:gameTotal(x),f:framesScored(x)}:null; });
     entries[b.slot]={abs:false,sub:b.subId||null,g:Array.from({length:K.G},(_,g)=>b.games[g]&&gameDone(b.games[g])?gameTotal(b.games[g]):null)};
-    if(live.some(Boolean)) entries[b.slot].live=live; });
+    if(live.some(Boolean)) entries[b.slot].live=live;
+    const fr=Array.from({length:K.G},(_,g)=>{ const x=b.games[g]; return x&&gameDone(x)?x.map(f=>f.map(c=>c||'')):null; });
+    if(fr.some(Boolean)) entries[b.slot].fr=fr; });
   const out={week:L.week,date:S.meta.date||today(),a:L.teams.a.id,b:L.teams.b.id,entries};
   if(L.newSubs&&L.newSubs.length) out.newSubs=L.newSubs;
   return out; }
