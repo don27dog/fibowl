@@ -1024,6 +1024,7 @@ $('print').onclick=()=>{ fitPrint(); setTimeout(()=>{ window.print(); },50); };
 const LEAGUE_URL='https://don27dog.github.io/league/league-backup.json';
 // address of the league's Cloudflare Worker; scores are sent here automatically (leave '' to turn sending off)
 const LEAGUE_API='https://fi-league.don27dog.workers.dev';
+try{ localStorage.removeItem('fibowl_pin'); }catch(e){}
 let LG=null;            // setup state while the league panel is open
 const lgValid=d=>!!(d&&d.config&&Array.isArray(d.config.teams)&&d.config.teams.length>=2);
 async function lgFetch(){
@@ -1113,7 +1114,7 @@ function renderLeaguePanel(){
       <p class="lgNote">${LG.mine&&LG.mine!=='both'?`The other team's phone scores ${esc(lgTeam(d,LG[LG.mine==='a'?'b':'a']).name)}. Both phones show the whole match.`:'Using two phones? Each picks its own team here.'}</p>`:''}
     ${['a','b'].map(sd=>!LG.mine||LG.mine==='both'||LG.mine===sd?team(sd):`<div class="lgTeam t${sd.toUpperCase()}" style="--tc:${lgColor(d,LG[sd])}"><h3>${esc(lgTeam(d,LG[sd]).name)}</h3><p class="lgNote" style="margin:0">Scored on the other phone, which also sets this team's absences and subs.</p></div>`).join('')}
     <p class="lgNote">Set anyone who isn't here to Absent (blind score of average − ${K.pen}) or pick a sub. Handicap is ${K.pct}% of ${K.basis} minus average.</p>
-    ${LEAGUE_API&&!store.get('fibowl_pin')?`<label style="margin-top:10px">League PIN (asked once on this phone)<input id="lgPin" inputmode="numeric" autocomplete="off" value="${esc(LG.pin||'')}"></label><p class="lgNote">With the PIN, scores go to the league secretary automatically after each game. Ask the secretary for it.</p>`:''}
+    ${LEAGUE_API?`<label style="margin-top:10px">League PIN<input id="lgPin" type="password" inputmode="numeric" autocomplete="off" value="${esc(LG.pin||'')}"></label><p class="lgNote">Needed every time League Bowlers is opened. Scores then go to the league secretary automatically after each game. Ask the secretary for the PIN.</p>`:''}
     ${LG.err?`<p class="lgErr">${LG.err}</p>`:''}
     <div class="addBtns"><button id="lgCancel">Cancel</button><button class="primary" id="lgGo">Start league night</button></div>
     <p class="lgNote">${lgSource()} ${lgFileLink}</p>`;
@@ -1149,9 +1150,11 @@ async function lgCheckPin(pin){
     if(r.status===429) return 'Too many wrong PINs. Wait 15 minutes, or start without one.'; }catch(e){}
   return ''; }   // no connection: keep the PIN and try it when sending
 async function startLeague(){
-  if(LEAGUE_API&&$('lgPin')){ const pin=($('lgPin').value||'').trim(); LG.pin=pin;
-    if(pin){ $('lgGo').disabled=true; const bad=await lgCheckPin(pin); if(!LG) return;
-      if(bad){ LG.err=bad; renderLeaguePanel(); return; } store.set('fibowl_pin',pin); } }
+  // the league PIN is asked for every time, and kept only for this league night (never remembered on the phone)
+  if(LEAGUE_API){ const pin=(($('lgPin')&&$('lgPin').value)||'').trim(); LG.pin=pin;
+    if(!pin){ LG.err='Enter the league PIN to start.'; renderLeaguePanel(); return; }
+    $('lgGo').disabled=true; const bad=await lgCheckPin(pin); if(!LG) return;
+    if(bad){ LG.pin=''; LG.err=bad; renderLeaguePanel(); return; } }
   if(LG.a===LG.b){ LG.err='Pick two different teams.'; renderLeaguePanel(); return; }
   if(LEAGUE_API&&!LG.mine){ LG.err='Pick which team this phone is scoring.'; renderLeaguePanel(); return; }
   const mine=LEAGUE_API?LG.mine:'both', mineHas=sd=>mine==='both'||mine===sd;
@@ -1170,7 +1173,7 @@ async function startLeague(){
   // averages for the other team and the subs, to work out handicaps for scores from the other phone
   const st={}; ['a','b'].forEach(sd=>{ if(!mineHas(sd)) lgTeam(d,LG[sd]).players.forEach(p=>{ st[p.id]=LG.st[p.id]; }); }); (d.config.subs||[]).forEach(x=>{ st[x.id]=LG.st[x.id]; });
   const lineVals=Object.values(LG.line), newSubs=(LG.rec.newSubs||[]).filter(x=>lineVals.includes(x.id));
-  S.bowlers=bowlers; S.league={name:d.config.name||'League',week:w,K,teams,mine,st,newSubs};
+  S.bowlers=bowlers; S.league={name:d.config.name||'League',week:w,K,teams,mine,st,newSubs,pin:LG.pin||''};
   S.league.lanes=lgLanes(d,w,LG.a,LG.b); if(S.league.lanes) S.meta.lane=S.league.lanes;
   S.meta.event='League'; $('m-event').value='League'; S.meta.date=today(); S.meta.games=1; S.meta.cur=0; cur=0; delete S.meta.finished;
   $('leaguePanel').hidden=true; $('leaguePanel').innerHTML=''; $('addBowler').hidden=false; LG=null;
@@ -1245,7 +1248,7 @@ function renderH2H(){ const box=$('h2h');
     <div class="no-print">${lgStatusHtml()}</div>
     <button class="linkBtn no-print" id="lgChange">Change teams or lineup</button>`;
   $('lgChange').onclick=openLeague;
-  if($('lgPinBtn')) $('lgPinBtn').onclick=()=>{ const pin=prompt('League PIN'); if(pin&&pin.trim()){ store.set('fibowl_pin',pin.trim()); S.league.status=''; S.league.sent=null; lgSend(); } };
+  if($('lgPinBtn')) $('lgPinBtn').onclick=()=>{ const pin=prompt('League PIN'); if(pin&&pin.trim()){ S.league.pin=pin.trim(); S.league.status=''; S.league.sent=null; save(); lgSend(); } };
   lgQueue();
   // say who took the game in the "Game complete" box, since the panel above may be scrolled away
   const x=R.a.games[cur], y=R.b.games[cur];
@@ -1283,12 +1286,12 @@ function lgQueue(delay){ if(!LEAGUE_API||!S.league) return; const body=JSON.stri
   if(body===S.league.sent){ return; }
   clearTimeout(lgTimer); lgTimer=setTimeout(lgSend,delay??1200); }
 async function lgSend(){ if(!LEAGUE_API||!S.league||lgBusy) return; const L=S.league, body=JSON.stringify(lgPayload());
-  if(body===L.sent) return; const pin=store.get('fibowl_pin'); if(!pin){ L.status='nopin'; renderH2H(); return; }
+  if(body===L.sent) return; const pin=L.pin; if(!pin){ L.status='nopin'; renderH2H(); return; }
   lgBusy=true; L.status='sending'; renderH2H(); let st, msg='';
   try{ const r=await fetch(LEAGUE_API+'/api/score',{method:'POST',headers:{'Content-Type':'application/json','X-League-Pin':pin},body,cache:'no-store'});
     const j=await r.json().catch(()=>({}));
     if(r.ok){ st='ok'; if(S.league===L){ L.sent=body; L.sentAt=Date.now(); } setTimeout(lgPull,500); }
-    else if(r.status===401){ st='pin'; store.set('fibowl_pin',null); }
+    else if(r.status===401){ st='pin'; L.pin=''; }
     else if(r.status>=500||r.status===429){ st='retry'; }
     else { st='rejected'; msg=j.error||''; L.sent=body; } }
   catch(e){ st='retry'; }
