@@ -80,7 +80,7 @@ details[open]>summary::after{content:"▴"}
 .ball:first-child{border-left:none}
 .ball:disabled{background:var(--cell);opacity:.5;cursor:default}
 .ball:focus{outline:none}
-.ball.sel{outline:3px solid #0b3d91;outline-offset:-3px;background:#a8f0b8;color:#000;box-shadow:0 0 0 2px #a8f0b8,0 0 8px 3px rgba(76,217,100,.7);position:relative;z-index:2}
+.ball.sel{outline:3px solid #1f5fbf;outline-offset:-3px;background:#1f5fbf;color:#fff;font-weight:800;box-shadow:inset 0 0 0 5px #fff,0 0 8px 3px rgba(31,95,191,.55);position:relative;z-index:2}
 .ball.bad{animation:shake .25s}
 @keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
 .cum{height:18px;line-height:18px;font-weight:600;text-align:center;font-size:13px}
@@ -166,7 +166,7 @@ body .frame:first-child{border-left:none!important}
 body .fn{font-size:8px;line-height:9px;border-color:#999}
 body .balls{border-color:#999}
 body .ball{height:16px;font-size:11px!important;border-color:#999;background:#fff!important;opacity:1!important;color:#000}
-body .ball.sel{outline:none}
+body .ball.sel{outline:none;background:none!important;color:inherit!important;box-shadow:none!important}
 body .cum{height:14px;line-height:14px;font-size:10px}
 body .sum{font-size:10px}
 body .sum th,body .sum td{padding:1px 4px}
@@ -205,7 +205,7 @@ body.printing .frame:first-child{border-left:none!important}
 body.printing .fn{font-size:8px;line-height:9px;border-color:#999}
 body.printing .balls{border-color:#999}
 body.printing .ball{height:16px;font-size:11px!important;border-color:#999;background:#fff!important;opacity:1!important;color:#000}
-body.printing .ball.sel{outline:none}
+body.printing .ball.sel{outline:none;background:none!important;color:inherit!important;box-shadow:none!important}
 body.printing .cum{height:14px;line-height:14px;font-size:10px}
 body.printing .sum{font-size:10px}
 body.printing .sum th,body.printing .sum td{padding:1px 4px}
@@ -261,7 +261,7 @@ body.printing .soundBtn,body.printing .markPop{display:none!important}
 .lgMeta div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px solid var(--line)}
 .lgMeta div:first-child{border-top:none}
 .lgMeta span{color:var(--muted)}.lgMeta b{text-align:right}
-.keypad.tA{border:4px solid #1f5fbf}.keypad.tB{border:4px solid #d9480f}
+.keypad{border:4px solid #1f5fbf}.keypad.tA{border:4px solid #1f5fbf}.keypad.tB{border:4px solid #d9480f}
 .tmTag{font-size:11px;font-weight:700;padding:1px 7px;border-radius:9px;white-space:nowrap;max-width:110px;overflow:hidden;text-overflow:ellipsis;color:#fff;background:var(--tc)}
 .h2h{border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin:0 0 8px}
 .h2h[hidden]{display:none}
